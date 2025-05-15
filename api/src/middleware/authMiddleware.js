@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware để xác thực JWT và lấy thông tin người dùng
+// Middleware xác thực token chuẩn Bearer Token
 exports.authenticate = (req, res, next) => {
-  const token = req.headers['authorization'];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Không có token, truy cập bị từ chối' });
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token không đúng chuẩn Bearer' });
   }
+
+  const token = authHeader.split(' ')[1];
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
@@ -17,7 +18,7 @@ exports.authenticate = (req, res, next) => {
   });
 };
 
-// Middleware để kiểm tra quyền admin
+// Check role
 exports.isAdmin = (req, res, next) => {
   if (req.user.role !== 'Admin') {
     return res.status(403).json({ error: 'Không có quyền admin' });
@@ -25,7 +26,6 @@ exports.isAdmin = (req, res, next) => {
   next();
 };
 
-// Middleware để kiểm tra quyền landlord
 exports.isLandlord = (req, res, next) => {
   if (req.user.role !== 'Landlord') {
     return res.status(403).json({ error: 'Không có quyền landlord' });
@@ -33,7 +33,6 @@ exports.isLandlord = (req, res, next) => {
   next();
 };
 
-// Middleware để kiểm tra quyền renter
 exports.isRenter = (req, res, next) => {
   if (req.user.role !== 'Renter') {
     return res.status(403).json({ error: 'Không có quyền renter' });

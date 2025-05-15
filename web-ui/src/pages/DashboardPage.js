@@ -3,17 +3,18 @@ import { getAdminDashboardData } from '../services/dashboardService'; // Import 
 import '../assets/DashboardPage.css'; // Import CSS cho trang
 
 const DashboardPage = () => {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Lấy dữ liệu tổng quan cho Admin
     const fetchData = async () => {
       try {
         const response = await getAdminDashboardData();
         setData(response);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        setError('Không thể tải dữ liệu dashboard');
       } finally {
         setLoading(false);
       }
@@ -21,9 +22,8 @@ const DashboardPage = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return <div className="loading">Đang tải dữ liệu...</div>;
-  }
+  if (loading) return <div className="loading">Đang tải dữ liệu...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="dashboard-page">
@@ -32,36 +32,22 @@ const DashboardPage = () => {
       <div className="dashboard-stats">
         <div className="stat-card">
           <h3>Tổng số người dùng</h3>
-          <p>{data.totalUsers}</p>
+          <p>{data?.totalUsers ?? '-'}</p>
         </div>
         <div className="stat-card">
           <h3>Tổng số phòng</h3>
-          <p>{data.totalRooms}</p>
+          <p>{data?.totalRooms ?? '-'}</p>
         </div>
         <div className="stat-card">
           <h3>Phòng trống</h3>
-          <p>{data.availableRooms}</p>
+          <p>{data?.availableRooms ?? '-'}</p>
         </div>
         <div className="stat-card">
           <h3>Phòng đã thuê</h3>
-          <p>{data.rentedRooms}</p>
-        </div>
-      </div>
-
-      <div className="dashboard-charts">
-        <div className="chart-card">
-          <h3>Biểu đồ trạng thái phòng</h3>
-          {/* Có thể sử dụng thư viện như Chart.js hoặc Recharts để vẽ biểu đồ */}
-          <div className="chart">Biểu đồ phòng</div>
-        </div>
-
-        <div className="chart-card">
-          <h3>Biểu đồ thanh toán</h3>
-          <div className="chart">Biểu đồ thanh toán</div>
+          <p>{data?.rentedRooms ?? '-'}</p>
         </div>
       </div>
     </div>
   );
 };
-
 export default DashboardPage;

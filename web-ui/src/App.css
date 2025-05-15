@@ -236,3 +236,22 @@ label {
     padding: 30px;
   }
 }
+
+/* logout btn*/
+.menu-list li button.logout-button {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.menu-list li button.logout-button:hover {
+  background-color: #fceaea;
+}

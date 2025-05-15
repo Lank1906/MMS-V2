@@ -24,3 +24,40 @@ exports.findUserByEmail = (email, callback) => {
     callback(null, results);
   });
 };
+
+exports.getAllUsers = async (search, limit, offset) => {
+  const [users] = await db.promise().query(`
+    SELECT user_id, username, email, phone, role, is_active 
+    FROM Users 
+    WHERE username LIKE ? OR email LIKE ? 
+    ORDER BY user_id DESC
+    LIMIT ? OFFSET ?
+  `, [`%${search}%`, `%${search}%`, Number(limit), Number(offset)]);
+  return users;
+};
+
+exports.getTotalUsers = async (search) => {
+  const [totalResult] = await db.promise().query(`
+    SELECT COUNT(*) AS total 
+    FROM Users 
+    WHERE username LIKE ? OR email LIKE ?
+  `, [`%${search}%`, `%${search}%`]);
+  return totalResult[0].total;
+};
+
+exports.getUserById = async (id) => {
+  const [user] = await db.promise().query(`
+    SELECT user_id, username, email, phone, role, is_active 
+    FROM Users 
+    WHERE user_id = ?
+  `, [id]);
+  return user[0];
+};
+
+exports.updateUserRole = async (id, role) => {
+  await db.promise().query(`UPDATE Users SET role=? WHERE user_id=?`, [role, id]);
+};
+
+exports.deleteUser = async (id) => {
+  await db.promise().query(`DELETE FROM Users WHERE user_id=?`, [id]);
+}

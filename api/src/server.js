@@ -1,31 +1,40 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors');  // Import cors
+const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const userRoutes = require('./routes/userRoutes'); // Thêm route quản lý user
 
-// Sử dụng dotenv để tải các biến môi trường
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Sử dụng CORS để cho phép truy cập từ localhost:3000 (React)
+// Cấu hình CORS cho frontend React
 const corsOptions = {
-  origin: 'http://localhost:3000', // Cho phép frontend trên localhost:3000 truy cập
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
-
-app.use(cors(corsOptions)); // Sử dụng cors middleware với cấu hình
-
-// Middleware để xử lý JSON body
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Đăng ký các route
-app.use('/api/auth', authRoutes);  
-app.use('/api/dashboard', dashboardRoutes);
+// Đăng ký routes
+app.use('/api/auth', authRoutes);
+app.use('/api', dashboardRoutes);
+app.use('/api/users', userRoutes); // Route admin quản lý user (phân trang, update role, xóa user)
 
-// Khởi động server
+// Route kiểm tra server
+app.get('/', (req, res) => {
+  res.send('Server API Quản lý Nhà Trọ Đang Chạy...');
+});
+
+// Global error handler (optional tốt cho dev)
+app.use((err, req, res, next) => {
+  console.error('Lỗi:', err.stack);
+  res.status(500).json({ error: 'Lỗi server nội bộ' });
+});
+
 app.listen(port, () => {
   console.log(`Server đang chạy tại http://localhost:${port}`);
 });
