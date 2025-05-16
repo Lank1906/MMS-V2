@@ -11,6 +11,7 @@ import PaymentManagementPage from './pages/PaymentManagementPage';
 import RoomTypeManagementPage from './pages/RoomTypeManagementPage';
 import ServiceManagementPage from './pages/ServiceManagementPage';
 import AdminUserManagementPage from './pages/AdminManagementPage';
+import RoomDetailPage from './pages/RoomDetailPage';
 import Sidebar from './components/Sidebar';
 import './App.css';
 
@@ -46,9 +47,11 @@ const App = () => {
                   <>
                     <Route path="/property-management" element={<PropertyManagementPage />} />
                     <Route path="/room-management" element={<RoomManagementPage />} />
+                    <Route path="/room-management/:propertyId" element={<RoomManagementPage />} />
                     <Route path="/payment-management" element={<PaymentManagementPage />} />
                     <Route path="/room-type-management" element={<RoomTypeManagementPage />} />
                     <Route path="/service-management" element={<ServiceManagementPage />} />
+                    <Route path="/room-detail/:roomId" element={<RoomDetailPage />} />
                   </>
                 )}
 

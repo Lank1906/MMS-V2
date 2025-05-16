@@ -3,7 +3,10 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
-const userRoutes = require('./routes/userRoutes'); // Thêm route quản lý user
+const userRoutes = require('./routes/userRoutes');
+const propertyRoutes = require('./routes/propertyRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const roomTypeRoutes = require('./routes/roomTypeRoutes');
 
 dotenv.config();
 
@@ -22,7 +25,10 @@ app.use(express.json());
 // Đăng ký routes
 app.use('/api/auth', authRoutes);
 app.use('/api', dashboardRoutes);
-app.use('/api/users', userRoutes); // Route admin quản lý user (phân trang, update role, xóa user)
+app.use('/api/users', userRoutes);
+app.use('/api/properties', propertyRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/roomtypes', roomTypeRoutes);
 
 // Route kiểm tra server
 app.get('/', (req, res) => {
