@@ -75,18 +75,10 @@ CREATE TABLE Contracts (
     status ENUM('Active', 'Completed', 'Terminated') DEFAULT 'Active',
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
     FOREIGN KEY (renter_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    is_active BOOLEAN DEFAULT TRUE -- Trạng thái hoạt động của hợp đồng (TRUE = hoạt động, FALSE = không hoạt động)
-);
-
--- Bảng Payments (Thanh toán)
-CREATE TABLE Payments (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    contract_id INT,
-    payment_date DATE NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    payment_method ENUM('Cash', 'Bank Transfer', 'Credit Card') NOT NULL,
-    FOREIGN KEY (contract_id) REFERENCES Contracts(contract_id) ON DELETE CASCADE,
-    is_active BOOLEAN DEFAULT TRUE -- Trạng thái hoạt động của thanh toán (TRUE = hoạt động, FALSE = không hoạt động)
+    is_active BOOLEAN DEFAULT TRUE, -- Trạng thái hoạt động của hợp đồng (TRUE = hoạt động, FALSE = không hoạt động)
+    payment_status ENUM('Unpaid', 'Paid') DEFAULT 'Unpaid',
+    payment_date DATE,
+    payment_method ENUM('Cash', 'Bank Transfer', 'Credit Card')
 );
 
 -- Bảng Room_Services (Liên kết phòng với dịch vụ sử dụng)
@@ -97,6 +89,17 @@ CREATE TABLE Room_Services (
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES Services(service_id) ON DELETE CASCADE,
     is_active BOOLEAN DEFAULT TRUE -- Trạng thái hoạt động của dịch vụ phòng (TRUE = hoạt động, FALSE = không hoạt động)
+);
+
+CREATE TABLE Room_Renters (
+    room_renter_id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    renter_id INT NOT NULL,
+    join_date DATE NOT NULL,
+    leave_date DATE,
+    status ENUM('Active', 'Left') DEFAULT 'Active',
+    FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
+    FOREIGN KEY (renter_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 
@@ -180,32 +183,18 @@ VALUES
 ('Cà phê', 'Dịch vụ cà phê cho các phòng VIP', 50000.00, TRUE);
 
 -- Thêm dữ liệu vào bảng Contracts (Hợp đồng thuê)
-INSERT INTO Contracts (room_id, renter_id, start_date, end_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, is_active)
+INSERT INTO Contracts (room_id, renter_id, start_date, end_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, is_active,payment_method)
 VALUES 
-(1, 5, '2023-01-01', '2023-12-31', 2000000.00, 50.00, 60.00, 200000.00, 'Active', TRUE),
-(2, 5, '2023-05-01', '2024-05-01', 3500000.00, 80.00, 90.00, 150000.00, 'Active', TRUE),
-(3, 6, '2023-03-01', '2024-03-01', 6000000.00, 100.00, 150.00, 250000.00, 'Completed', TRUE),
-(7, 7, '2023-06-01', '2024-06-01', 4500000.00, 60.00, 70.00, 100000.00, 'Active', TRUE),
-(4, 8, '2023-04-01', '2024-04-01', 3000000.00, 60.00, 75.00, 180000.00, 'Active', TRUE),
-(5, 9, '2023-07-01', '2024-07-01', 4000000.00, 90.00, 120.00, 200000.00, 'Active', TRUE),
-(6, 10, '2023-02-01', '2024-02-01', 3500000.00, 80.00, 85.00, 150000.00, 'Active', TRUE),
-(2, 9, '2023-08-01', '2024-08-01', 4200000.00, 75.00, 100.00, 175000.00, 'Completed', TRUE),
-(1, 8, '2023-11-01', '2024-11-01', 2500000.00, 55.00, 65.00, 190000.00, 'Terminated', TRUE),
-(3, 7, '2023-01-15', '2024-01-15', 3800000.00, 70.00, 80.00, 210000.00, 'Active', TRUE);
-
--- Thêm dữ liệu vào bảng Payments (Thanh toán)
-INSERT INTO Payments (contract_id, payment_date, amount, payment_method, is_active)
-VALUES 
-(1, '2023-01-05', 2200000.00, 'Bank Transfer', TRUE),
-(2, '2023-05-10', 3700000.00, 'Credit Card', TRUE),
-(3, '2023-03-15', 6250000.00, 'Cash', TRUE),
-(4, '2023-06-10', 4600000.00, 'Bank Transfer', TRUE),
-(5, '2023-04-05', 3180000.00, 'Cash', TRUE),
-(6, '2023-07-12', 4200000.00, 'Credit Card', TRUE),
-(7, '2023-02-20', 3350000.00, 'Bank Transfer', TRUE),
-(8, '2023-08-01', 4000000.00, 'Cash', TRUE),
-(9, '2023-11-05', 2500000.00, 'Bank Transfer', TRUE),
-(10, '2023-02-25', 3900000.00, 'Credit Card', TRUE);
+(1, 5, '2023-01-01', '2023-12-31', 2000000.00, 50.00, 60.00, 200000.00, 'Active', TRUE, 'Bank Transfer'),
+(2, 5, '2023-05-01', '2024-05-01', 3500000.00, 80.00, 90.00, 150000.00, 'Active', TRUE, 'Bank Transfer'),
+(3, 6, '2023-03-01', '2024-03-01', 6000000.00, 100.00, 150.00, 250000.00, 'Completed', TRUE, 'Bank Transfer'),
+(7, 7, '2023-06-01', '2024-06-01', 4500000.00, 60.00, 70.00, 100000.00, 'Active', TRUE, 'Bank Transfer'),
+(4, 8, '2023-04-01', '2024-04-01', 3000000.00, 60.00, 75.00, 180000.00, 'Active', TRUE, 'Bank Transfer'),
+(5, 9, '2023-07-01', '2024-07-01', 4000000.00, 90.00, 120.00, 200000.00, 'Active', TRUE, 'Bank Transfer'),
+(6, 10, '2023-02-01', '2024-02-01', 3500000.00, 80.00, 85.00, 150000.00, 'Active', TRUE, 'Bank Transfer'),
+(2, 9, '2023-08-01', '2024-08-01', 4200000.00, 75.00, 100.00, 175000.00, 'Completed', TRUE, 'Bank Transfer'),
+(1, 8, '2023-11-01', '2024-11-01', 2500000.00, 55.00, 65.00, 190000.00, 'Terminated', TRUE, 'Bank Transfer'),
+(3, 7, '2023-01-15', '2024-01-15', 3800000.00, 70.00, 80.00, 210000.00, 'Active', TRUE, 'Bank Transfer');
 
 -- Thêm dữ liệu vào bảng Room_Services (Liên kết phòng với dịch vụ sử dụng)
 INSERT INTO Room_Services (room_id, service_id, is_active)
@@ -220,3 +209,16 @@ VALUES
 (4, 3, TRUE), -- Phòng D1 sử dụng dịch vụ Bảo vệ
 (5, 4, TRUE), -- Phòng E1 sử dụng dịch vụ Dọn vệ sinh
 (6, 5, TRUE); -- Phòng F1 sử dụng dịch vụ Cáp truyền hình
+
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (1, 5, '2024-06-01', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (2, 6, '2024-06-05', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (3, 7, '2024-06-10', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (1, 8, '2024-06-15', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (4, 9, '2024-06-20', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (5, 10, '2024-06-25', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (2, 7, '2024-06-28', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (3, 8, '2024-07-01', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (4, 5, '2024-07-05', 'Active');
+INSERT INTO Room_Renters (room_id, renter_id, join_date, status) VALUES (5, 6, '2024-07-10', 'Active');
+
+ALTER TABLE Rooms ADD COLUMN image_url VARCHAR(500) DEFAULT NULL;

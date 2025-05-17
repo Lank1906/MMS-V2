@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getContracts, createContract, deleteContract } from '../services/contractService';
 import { getRoomServices, createRoomService, deleteRoomService } from '../services/roomServiceService';
-import axios from 'axios';
+import { getRoomById } from '../services/roomService';
+import { getServices } from '../services/serviceService';
+import { getRoomRentersByRoomId, deleteRoomRenter } from '../services/roomRenterService';
 import '../assets/RoomDetailPage.css'
 
 const RoomDetailPage = () => {
     const { roomId } = useParams();
-
     const [room, setRoom] = useState(null);
-
     const [contracts, setContracts] = useState([]);
+    const [services, setServices] = useState([]);
+    const [roomRenters, setRoomRenters] = useState([]);
+
     const [showContractModal, setShowContractModal] = useState(false);
     const [newContract, setNewContract] = useState({
         start_date: '',
@@ -26,76 +29,49 @@ const RoomDetailPage = () => {
         total_service_price: 0,
     });
 
-    const [services, setServices] = useState([]);
     const [showServiceModal, setShowServiceModal] = useState(false);
     const [newServiceId, setNewServiceId] = useState('');
     const [allServices, setAllServices] = useState([]);
 
-    // Fetch phòng + loại phòng chi tiết
-    const fetchRoom = async () => {
-        const token = localStorage.getItem('authToken');
+    const fetchAll = async () => {
         try {
-            const res = await axios.get(`https://ho-ng-b-i-1.paiza-user-free.cloud:5000/api/rooms/${roomId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setRoom(res.data);
-
-            if (res.data?.rent_price) {
-                setNewContract((prev) => ({
-                    ...prev,
-                    rent_price: res.data.rent_price,
-                    old_water_usage: res.data.current_water_usage || 0,
-                    old_electricity_usage: res.data.current_electricity_usage || 0,
-                }));
-            }
+            const roomData = await getRoomById(roomId);
+            setRoom(roomData);
+            setNewContract(prev => ({
+                ...prev,
+                rent_price: roomData.rent_price,
+                old_water_usage: roomData.current_water_usage || 0,
+                old_electricity_usage: roomData.current_electricity_usage || 0,
+            }));
+            const contractsData = await getContracts(roomId);
+            setContracts(contractsData);
+            const servicesData = await getRoomServices(roomId);
+            setServices(servicesData);
+            const allSvcData = await getServices(1, 100);
+            setAllServices(allSvcData);
+            const rentersData = await getRoomRentersByRoomId(roomId);
+            setRoomRenters(rentersData);
         } catch {
-            alert('Lỗi khi tải thông tin phòng');
+            alert('Lỗi tải dữ liệu');
         }
     };
 
-    const fetchAll = () => {
-        fetchRoom();
-        getContracts(roomId).then(setContracts).catch(() => alert('Lỗi tải hợp đồng'));
-        getRoomServices(roomId).then(setServices).catch(() => alert('Lỗi tải dịch vụ'));
-        fetchAllServices();
-    };
+    useEffect(() => { fetchAll(); }, [roomId]);
 
-    const fetchAllServices = async () => {
-        const token = localStorage.getItem('authToken');
-        try {
-            const res = await axios.get('https://ho-ng-b-i-1.paiza-user-free.cloud:5000/api/services', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setAllServices(res.data);
-        } catch {
-            alert('Lỗi tải danh sách dịch vụ');
-        }
-    };
-
-    useEffect(() => {
-        fetchAll();
-    }, [roomId]);
-
-    // Tính tiền nước và điện dựa vào số liệu mới và giá
     useEffect(() => {
         if (!room) return;
         const waterPrice = room.water_price || 0;
         const elecPrice = room.electricity_price || 0;
-
         const newWater = parseFloat(newContract.new_water_usage);
         const newElec = parseFloat(newContract.new_electricity_usage);
         const oldWater = parseFloat(newContract.old_water_usage);
         const oldElec = parseFloat(newContract.old_electricity_usage);
-
         let waterUsed = 0;
         if (!isNaN(newWater) && newWater >= oldWater) waterUsed = newWater - oldWater;
-
         let elecUsed = 0;
         if (!isNaN(newElec) && newElec >= oldElec) elecUsed = newElec - oldElec;
-
         const waterCost = waterUsed * waterPrice;
         const elecCost = elecUsed * elecPrice;
-
         setNewContract(prev => ({
             ...prev,
             total_water_price: waterCost,
@@ -103,7 +79,6 @@ const RoomDetailPage = () => {
         }));
     }, [newContract.new_water_usage, newContract.new_electricity_usage, room]);
 
-    // Tính tổng tiền dịch vụ tự động khi dịch vụ thay đổi
     useEffect(() => {
         if (!services) return;
         const totalService = services.reduce((sum, svc) => sum + (svc.service_price || 0), 0);
@@ -112,7 +87,7 @@ const RoomDetailPage = () => {
 
     const handleAddContract = async (e) => {
         e.preventDefault();
-        const { start_date, rent_price, status, total_water_price, total_electricity_price } = newContract;
+        const { start_date, rent_price, status } = newContract;
         if (!start_date || !rent_price || !status) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
@@ -172,6 +147,16 @@ const RoomDetailPage = () => {
             fetchAll();
         } catch {
             alert('Lỗi khi xóa dịch vụ');
+        }
+    };
+
+    const handleDeleteRoomRenter = async (roomRenterId) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xoá người thuê này khỏi phòng?')) return;
+        try {
+            await deleteRoomRenter(roomId, roomRenterId);
+            fetchAll();
+        } catch {
+            alert('Lỗi khi xoá người thuê');
         }
     };
 
@@ -239,14 +224,14 @@ const RoomDetailPage = () => {
             </div>
 
             {/* Phần bên phải: Hợp đồng + Dịch vụ */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Danh sách hợp đồng */}
                 <div style={{
                     background: '#fff',
                     padding: 24,
                     borderRadius: 12,
                     boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                    flex: 1,
+                    flexBasis: '33%',
                     overflowY: 'auto',
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -276,6 +261,9 @@ const RoomDetailPage = () => {
                                 <th style={{ padding: 12 }}>Tiền điện</th>
                                 <th style={{ padding: 12 }}>Tiền dịch vụ</th>
                                 <th style={{ padding: 12 }}>Trạng thái</th>
+                                <th style={{ padding: 12 }}>Phương thức</th>
+                                <th style={{ padding: 12 }}>Trang thái thanh toán</th>
+                                <th style={{ padding: 12 }}>Ngày</th>
                                 <th style={{ padding: 12 }}>Thao tác</th>
                             </tr>
                         </thead>
@@ -294,6 +282,9 @@ const RoomDetailPage = () => {
                                         <td style={{ padding: 12 }}>{contract.total_electricity_price?.toLocaleString() || 0} đ</td>
                                         <td style={{ padding: 12 }}>{contract.total_service_price?.toLocaleString() || 0} đ</td>
                                         <td style={{ padding: 12 }}>{contract.status}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_method}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_status}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_date}</td>
                                         <td style={{ padding: 12 }}>
                                             <button
                                                 onClick={() => handleDeleteContract(contract.contract_id)}
@@ -315,7 +306,7 @@ const RoomDetailPage = () => {
                     padding: 24,
                     borderRadius: 12,
                     boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                    flexBasis: '40%',
+                    flexBasis: '33%',
                     overflowY: 'auto',
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -359,8 +350,53 @@ const RoomDetailPage = () => {
                         </ul>
                     )}
                 </div>
-            </div>
 
+                <div style={{
+                    background: '#fff',
+                    padding: 24,
+                    borderRadius: 12,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                    flexBasis: '33%',
+                    overflowY: 'auto',
+                }}>
+                    <h2 style={{ marginBottom: 12, color: '#333' }}>Người thuê trong phòng</h2>
+                    {roomRenters.length === 0 ? (
+                        <p>Không có người thuê</p>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                            <thead>
+                                <tr style={{ background: '#3f51b5', color: 'white', textAlign: 'left' }}>
+                                    <th style={{ padding: 12 }}>Tên</th>
+                                    <th style={{ padding: 12 }}>SĐT</th>
+                                    <th style={{ padding: 12 }}>Ngày vào</th>
+                                    <th style={{ padding: 12 }}>Trạng thái</th>
+                                    <th style={{ padding: 12 }}>Ngày rời</th>
+                                    <th style={{ padding: 12 }}>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {roomRenters.map(renter => (
+                                    <tr key={renter.room_renter_id} style={{ borderBottom: '1px solid #eee' }}>
+                                        <td style={{ padding: 12 }}>{renter.username}</td>
+                                        <td style={{ padding: 12 }}>{renter.phone}</td>
+                                        <td style={{ padding: 12 }}>{renter.join_date ? new Date(renter.join_date).toLocaleDateString() : '-'}</td>
+                                        <td style={{ padding: 12 }}>{renter.status}</td>
+                                        <td style={{ padding: 12 }}>{renter.leave_date ? new Date(renter.leave_date).toLocaleDateString() : '-'}</td>
+                                        <td style={{ padding: 12 }}>
+                                            <button
+                                                onClick={() => handleDeleteRoomRenter(renter.room_renter_id)}
+                                                style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                                            >
+                                                Xoá
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
             {/* Modal thêm hợp đồng */}
             {showContractModal && (
                 <div style={{

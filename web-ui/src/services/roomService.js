@@ -17,6 +17,13 @@ export const getRooms = async (filters) => {
   return res.data;
 };
 
+export const getRoomById = async (id) => {
+  const res = await axios.get(`${API_URL}/${id}`, {
+    headers: { Authorization: getToken() }
+  });
+  return res.data;
+};
+
 export const createRoom = async (data) => {
   const res = await axios.post(API_URL, data, { headers: { Authorization: getToken() } });
   return res.data;

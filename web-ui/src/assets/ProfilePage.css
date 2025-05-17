@@ -1,0 +1,123 @@
+/* Tổng thể của container */
+.profile-container {
+  width: 60%; /* Chiếm 60% màn hình */
+  margin: 0 auto; /* Canh giữa */
+  padding: 20px;
+  background-color: #f9f9f9; /* Màu nền nhạt */
+  border-radius: 8px; /* Bo góc */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+}
+
+/* Các thông tin người dùng */
+.profile-info {
+  display: flex;
+  flex-direction: column; /* Hiển thị theo cột */
+  gap: 20px; /* Khoảng cách giữa các trường thông tin */
+}
+
+/* Mỗi trường thông tin */
+.profile-field {
+  display: flex;
+  justify-content: space-between; /* Căn lề trái và phải */
+  padding: 10px 0; /* Padding trên dưới */
+  font-size: 16px; /* Cỡ chữ */
+  border-bottom: 1px solid #ddd; /* Đường viền dưới trường */
+}
+
+/* Các nhãn thông tin (label) */
+label {
+  font-weight: bold; /* Chữ đậm cho nhãn */
+  color: #333; /* Màu chữ nhãn */
+}
+
+/* Các trường dữ liệu (span) */
+span {
+  color: #555; /* Màu chữ thông tin */
+}
+
+/* Hiển thị ảnh đại diện */
+.profile-field img {
+  border-radius: 50%; /* Bo tròn ảnh đại diện */
+  object-fit: cover; /* Cắt ảnh cho vừa */
+}
+
+/* Nút cập nhật thông tin */
+button {
+  padding: 12px 25px; /* Padding cho nút */
+  background-color: #007bff; /* Màu nền nút */
+  color: white; /* Màu chữ nút */
+  border: none;
+  border-radius: 5px; /* Bo góc nút */
+  cursor: pointer; /* Con trỏ dạng bàn tay */
+  font-size: 16px; /* Cỡ chữ */
+  width: 200px; /* Chiều rộng của nút */
+  margin-top: 20px; /* Khoảng cách từ các trường trên */
+}
+
+/* Nút khi hover */
+button:hover {
+  background-color: #0056b3; /* Màu nền khi di chuột vào */
+}
+
+/* Thông báo lỗi */
+.error-message {
+  color: red; /* Màu đỏ cho thông báo lỗi */
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+button:disabled {
+  background-color: #cccccc; /* Màu nền khi nút bị vô hiệu hóa */
+  cursor: not-allowed; /* Con trỏ không cho phép */
+}
+.profile-container {
+  width: 60%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+label {
+  font-weight: bold;
+}
+
+input {
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 80%;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+button:hover {
+  background-color: #0056b3;
+}

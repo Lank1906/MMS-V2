@@ -7,11 +7,16 @@ import DashboardPage from './pages/DashboardPage';
 import PropertyManagementPage from './pages/PropertyManagementPage';
 import RoomManagementPage from './pages/RoomManagementPage';
 import ContractManagementPage from './pages/ContractManagementPage';
-import PaymentManagementPage from './pages/PaymentManagementPage';
 import RoomTypeManagementPage from './pages/RoomTypeManagementPage';
 import ServiceManagementPage from './pages/ServiceManagementPage';
 import AdminUserManagementPage from './pages/AdminManagementPage';
 import RoomDetailPage from './pages/RoomDetailPage';
+
+import RoomDetailRenterPage from './pages/RoomDetailRenterPage'; 
+import FreeRoomsPage from './pages/FreeRoomsPage';     
+import MyRoomPage from './pages/MyRoomPage';           
+import ProfilePage from './pages/ProfilePage'; 
+
 import Sidebar from './components/Sidebar';
 import './App.css';
 
@@ -48,7 +53,6 @@ const App = () => {
                     <Route path="/property-management" element={<PropertyManagementPage />} />
                     <Route path="/room-management" element={<RoomManagementPage />} />
                     <Route path="/room-management/:propertyId" element={<RoomManagementPage />} />
-                    <Route path="/payment-management" element={<PaymentManagementPage />} />
                     <Route path="/room-type-management" element={<RoomTypeManagementPage />} />
                     <Route path="/service-management" element={<ServiceManagementPage />} />
                     <Route path="/room-detail/:roomId" element={<RoomDetailPage />} />
@@ -58,8 +62,10 @@ const App = () => {
                 {/* Renter */}
                 {currentUser.role === 'Renter' && (
                   <>
-                    <Route path="/room-management" element={<RoomManagementPage />} />
-                    <Route path="/contract-management" element={<ContractManagementPage />} />
+                    <Route path="/free-rooms" element={<FreeRoomsPage />} />
+                    <Route path="/renter-room-detail/:roomId" element={<RoomDetailRenterPage />} />
+                    <Route path="/my-room" element={<MyRoomPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                   </>
                 )}
               </>

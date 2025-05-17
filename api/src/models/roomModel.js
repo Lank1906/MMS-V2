@@ -6,7 +6,7 @@ exports.getRooms = (landlordId, filters, callback) => {
   const offset = (page - 1) * limit;
 
   let sql = `
-    SELECT r.room_id, r.room_number, r.status, r.max_occupants, r.property_id, r.room_type_id, rt.name AS room_type_name, rt.rent_price
+    SELECT r.room_id, r.room_number, r.status, r.max_occupants, r.property_id, r.room_type_id,r.current_water_usage,r.current_electricity_usage,r.image_url, rt.name AS room_type_name, rt.rent_price
     FROM Rooms r
     JOIN Properties p ON r.property_id = p.property_id
     JOIN RoomTypes rt ON r.room_type_id = rt.room_type_id
@@ -112,14 +112,14 @@ exports.getRoomById = (roomId, landlordId, callback) => {
 // Thêm phòng mới
 exports.createRoom = (landlordId, data, callback) => {
   const sql = `
-    INSERT INTO Rooms (property_id, room_type_id, room_number, max_occupants, status, is_active)
-    VALUES (?, ?, ?, ?, ?, TRUE)
+    INSERT INTO Rooms (property_id, room_type_id, room_number, max_occupants, status, is_active,image_url,current_electricity_usage,current_water_usage)
+    VALUES (?, ?, ?, ?, ?, TRUE,?,?,?)
   `;
 
   // Bạn nên kiểm tra property_id thuộc landlordId ở controller trước khi gọi hàm này
   db.query(
     sql,
-    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status],
+    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status,data.image_url,data.current_electricity_usage,data.current_water_usage],
     (err, result) => {
       if (err) return callback(err);
       callback(null, result);
@@ -132,13 +132,13 @@ exports.updateRoom = (roomId, landlordId, data, callback) => {
   const sql = `
     UPDATE Rooms r
     JOIN Properties p ON r.property_id = p.property_id
-    SET r.property_id = ?, r.room_type_id = ?, r.room_number = ?, r.max_occupants = ?, r.status = ?
+    SET r.property_id = ?, r.room_type_id = ?, r.room_number = ?, r.max_occupants = ?, r.status = ?,r.image_url=?,r.current_electricity_usage=?,r.current_water_usage=?
     WHERE r.room_id = ? AND p.landlord_id = ? AND r.is_active = TRUE
   `;
 
   db.query(
     sql,
-    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status, roomId, landlordId],
+    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status,data.image_url,data.current_electricity_usage,data.current_water_usage, roomId, landlordId],
     (err, result) => {
       if (err) return callback(err);
       callback(null, result);

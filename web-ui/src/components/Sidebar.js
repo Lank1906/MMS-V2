@@ -7,8 +7,8 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout(); // Xóa token, dữ liệu user
-    navigate('/login'); // Chuyển về trang login
+    logout(); 
+    navigate('/login'); 
   };
 
   if (!currentUser) return null;
@@ -19,10 +19,11 @@ const Sidebar = () => {
         <h2>Menu</h2>
       </div>
       <ul className="menu-list">
-        <li><Link to="/dashboard" className="menu-item">📊 Dashboard</Link></li>
+        
 
         {currentUser.role === 'Admin' && (
           <>
+            <li><Link to="/dashboard" className="menu-item">📊 Dashboard</Link></li>
             <li><Link to="/user-management" className="menu-item">👤 Quản lý người dùng</Link></li>
           </>
         )}
@@ -31,16 +32,22 @@ const Sidebar = () => {
           <>
             <li><Link to="/property-management" className="menu-item">🏘 Quản lý cụm nhà trọ</Link></li>
             <li><Link to="/room-management" className="menu-item">🏠 Quản lý phòng</Link></li>
-            <li><Link to="/payment-management" className="menu-item">💰 Quản lý thanh toán</Link></li>
             <li><Link to="/room-type-management" className="menu-item">⚙️ Quản lý loại phòng</Link></li>
             <li><Link to="/service-management" className="menu-item">🔧 Quản lý dịch vụ</Link></li>
           </>
         )}
 
-        {currentUser.role === 'Renter' && (
+         {currentUser.role === 'Renter' && (
           <>
-            <li><Link to="/room-management" className="menu-item">🏠 Xem phòng</Link></li>
-            <li><Link to="/contract-management" className="menu-item">📄 Xem hợp đồng</Link></li>
+            <li>
+              <Link to="/free-rooms" className="menu-item">📊 Dashboard</Link>
+            </li>
+            <li>
+              <Link to="/my-room" className="menu-item">🏡 Phòng đang thuê</Link>
+            </li>
+            <li>
+              <Link to="/profile" className="menu-item">👤 Thông tin cá nhân</Link>
+            </li>
           </>
         )}
 
