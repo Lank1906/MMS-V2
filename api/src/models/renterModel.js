@@ -41,7 +41,7 @@ exports.getAvailableRooms = (address, minPrice, maxPrice, page, limit, callback)
 exports.getRoomById = (roomId, callback) => {
   const sql = `
     SELECT 
-      r.room_id, r.room_number, r.status, r.is_active,
+      r.room_id, r.room_number, r.status, r.is_active,r.image_url,
       p.address AS property_address,
       rt.rent_price,
       rt.name AS room_type_name
@@ -141,4 +141,28 @@ exports.getUnpaidContractsByUser = (userId, callback) => {
     if (err) return callback(err);
     callback(null, results); // Trả về danh sách hợp đồng chưa thanh toán của người dùng
   });
+};
+
+exports.updateContractPaymentStatus = (orderId, updateData) => {
+  return new Promise((resolve, reject) => {
+    const { payment_status, payment_amount, message } = updateData;
+    const sql = `
+      UPDATE Contracts 
+      SET payment_status = ?, payment_method = ?
+      WHERE contract_id = ? AND is_active = TRUE
+    `;
+    
+    db.query(sql, [payment_status, 'Bank Transfer',  orderId.split('LANK')[0]], (err, result) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+  });
+};
+
+exports.getContractsByUserAndPaymentStatus = (userId, paymentStatus, callback) => {
+  const sql = `
+    SELECT * FROM Contracts
+    WHERE renter_id = ? AND payment_status = ? AND is_active = TRUE
+  `;
+  db.query(sql, [userId, paymentStatus], callback);
 };

@@ -109,7 +109,6 @@ select {
 .pagination button {
   padding: 8px 16px;
   border: 1px solid #ddd;
-  background-color: white;
   border-radius: 6px;
   cursor: pointer;
 }

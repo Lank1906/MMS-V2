@@ -7,21 +7,25 @@ const FreeRoomsPage = () => {
   const [filters, setFilters] = useState({ address: '', minPrice: '', maxPrice: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 9; // Số phòng trên mỗi trang
+  const [totalRooms, setTotalRooms] = useState(0);
 
-  const fetchRooms = async () => {
+  const fetchRooms = async (pageNumber = 1) => {
     setLoading(true);
     setError(null);
     try {
-      // Chuyển minPrice và maxPrice sang số hoặc undefined để API xử lý chuẩn
       const params = {
         address: filters.address,
         minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
         maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-        page: 1,
-        limit: 20,
+        page: pageNumber,
+        limit,
       };
       const data = await renterService.getAvailableRooms(params);
       setRooms(data.rooms || []);
+      setTotalRooms(data.total || 0);  // Giả sử API trả về total số phòng
+      setPage(pageNumber);
     } catch (err) {
       setError('Lỗi khi lấy danh sách phòng');
       console.error(err);
@@ -30,7 +34,7 @@ const FreeRoomsPage = () => {
   };
 
   useEffect(() => {
-    fetchRooms();
+    fetchRooms(1);
   }, []);
 
   const handleInputChange = (e) => {
@@ -39,7 +43,14 @@ const FreeRoomsPage = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    fetchRooms();
+    fetchRooms(1); // Tìm kiếm sẽ luôn bắt đầu từ trang 1
+  };
+
+  const totalPages = Math.ceil(totalRooms / limit);
+
+  const goToPage = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    fetchRooms(newPage);
   };
 
   return (
@@ -100,6 +111,24 @@ const FreeRoomsPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Phân trang */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button onClick={() => goToPage(page - 1)} disabled={page === 1}>
+            &laquo; Trang trước
+          </button>
+
+          <span>
+            Trang {page} / {totalPages}
+          </span>
+
+          <button onClick={() => goToPage(page + 1)} disabled={page === totalPages}>
+            Trang sau &raquo;
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

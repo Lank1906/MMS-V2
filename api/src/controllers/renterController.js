@@ -1,9 +1,11 @@
 const renterModel = require('../models/renterModel');
+const crypto = require('crypto');
+const axios = require('axios');
 
 // Lấy danh sách phòng trống với các bộ lọc
 exports.getAvailableRooms = (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || 9;
   const address = req.query.address || '';
   const minPrice = parseFloat(req.query.minPrice) || 0;
   const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_SAFE_INTEGER;
@@ -35,30 +37,34 @@ exports.getActiveContracts = (req, res) => {
   });
 };
 
-// Thuê phòng (tạo hợp đồng)
 exports.rentRoom = (req, res) => {
   const userId = req.user.user_id;
   const { room_id, rent_price } = req.body;
 
-  // Kiểm tra xem người dùng có hợp đồng đang hoạt động hay không
-  renterModel.getActiveContractsByUser(userId, (err, contracts) => {
-    if (err) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng' });
+  // Lấy danh sách các hợp đồng chưa thanh toán của user
+  renterModel.getContractsByUserAndPaymentStatus(userId, 'Unpaid', (err, unpaidContracts) => {
+    if (err) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng chưa thanh toán' });
 
-    if (contracts.length > 0) {
-      return res.status(400).json({ error: 'Bạn đang thuê phòng khác, vui lòng trả phòng trước khi thuê phòng mới.' });
+    if (unpaidContracts.length >= 3) {
+      return res.status(400).json({ error: 'Bạn có 3 hợp đồng chưa thanh toán. Vui lòng thanh toán trước khi thuê phòng mới.' });
     }
 
-    const start_date = new Date().toISOString().split('T')[0];
+    // Kiểm tra xem người dùng có hợp đồng đang hoạt động hay không (bất kỳ trạng thái)
+    renterModel.getActiveContractsByUser(userId, (err2, activeContracts) => {
+      if (err2) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng đang hoạt động' });
 
-    // Tạo hợp đồng mới
-    renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price }, (err2, result) => {
-      if (err2) return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
+      const start_date = new Date().toISOString().split('T')[0];
 
-      // Cập nhật trạng thái phòng thành "Rented"
-      renterModel.updateRoomStatus(room_id, 'Rented', (err3) => {
-        if (err3) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
+      // Tạo hợp đồng mới
+      renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price }, (err3, result) => {
+        if (err3) return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
 
-        res.status(201).json({ message: 'Thuê phòng thành công', contractId: result.insertId });
+        // Cập nhật trạng thái phòng thành "Rented"
+        renterModel.updateRoomStatus(room_id, 'Rented', (err4) => {
+          if (err4) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
+
+          res.status(201).json({ message: 'Thuê phòng thành công', contractId: result.insertId });
+        });
       });
     });
   });
@@ -113,4 +119,116 @@ exports.updateProfile = (req, res) => {
     if (err) return res.status(500).json({ error: 'Lỗi server khi cập nhật thông tin người dùng' });
     res.json({ message: 'Cập nhật thông tin thành công' });
   });
+};
+
+exports.createPayment = async (req, res) => {
+    const { amount, orderId, orderInfo } = req.body;
+
+    var accessKey = 'F8BBA842ECF85';
+    var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
+    var partnerCode = 'MOMO';
+    var redirectUrl = 'https://ho-ng-b-i-1.paiza-user-free.cloud:5000/api/renter/payment-redirect';
+    var ipnUrl = 'https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b';
+    var requestType = "payWithMethod";
+    var requestId = orderId+"LANK" + new Date().getTime();
+    var extraData ='';
+    var orderGroupId ='';
+    var autoCapture =true;
+    var lang = 'vi';
+    var id=orderId+"LANK" +  new Date().getTime();
+    
+
+    //before sign HMAC SHA256 with format
+    //accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
+    var rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData + "&ipnUrl=" + ipnUrl + "&orderId=" + id + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl + "&requestId=" + requestId + "&requestType=" + requestType;
+    //puts raw signature
+    console.log("--------------------RAW SIGNATURE----------------")
+    console.log(rawSignature)
+    //signature
+    const crypto = require('crypto');
+    var signature = crypto.createHmac('sha256', secretKey)
+        .update(rawSignature)
+        .digest('hex');
+    console.log("--------------------SIGNATURE----------------")
+    console.log(signature)
+
+    //json object send to MoMo endpoint
+    const requestBody = JSON.stringify({
+        partnerCode : partnerCode,
+        partnerName : "Test",
+        storeId : "MomoTestStore",
+        requestId : requestId,
+        amount : amount,
+        orderId : id,
+        orderInfo : orderInfo,
+        redirectUrl : redirectUrl,
+        ipnUrl : ipnUrl,
+        lang : lang,
+        requestType: requestType,
+        autoCapture: autoCapture,
+        extraData : extraData,
+        orderGroupId: orderGroupId,
+        signature : signature
+    });
+    
+    const options={
+        method:"POST",
+        url:"https://test-payment.momo.vn/v2/gateway/api/create",
+        headers:{
+            'Content-Type':'application/json',
+            'Content-Length':Buffer.byteLength(requestBody)
+        },
+        data:requestBody
+    }
+  try {
+    // Gửi request tới MoMo
+    const response = await axios(options);
+    console.log(response.data)
+    if (response.data.payUrl) {
+      // Trả về URL thanh toán MoMo (QR code hoặc redirect link)
+      return res.json({ payUrl: response.data.payUrl });
+    } else {
+      return res.status(400).json({ error: 'Không thể lấy URL thanh toán' });
+    }
+  } catch (error) {
+    console.error('Lỗi thanh toán MoMo:', error);
+    return res.status(500).json({ error: 'Lỗi server khi tạo thanh toán' });
+  }
+};
+
+exports.redirectPayment=(req, res) => {
+  const { orderId, resultCode, message, amount, transId } = req.query;
+
+  // Kiểm tra kết quả trả về từ MoMo
+  if (resultCode === '0') {
+    // Thanh toán thành công
+    console.log(`Thanh toán thành công cho đơn hàng ${orderId}.`);
+
+    // Cập nhật trạng thái thanh toán trong DB
+    renterModel.updateContractPaymentStatus(orderId, {
+      payment_status: 'Paid',
+      payment_amount: amount,  // Số tiền thanh toán
+      message: message,
+    }).then(() => {
+      res.redirect('http://localhost:3000/my-room');
+    }).catch((err) => {
+      console.error('Lỗi khi cập nhật trạng thái thanh toán trong DB:', err);
+      res.status(500).send('Lỗi server khi cập nhật thông tin thanh toán.');
+    });
+
+  } else {
+    // Thanh toán thất bại
+    console.log(`Thanh toán thất bại cho đơn hàng ${orderId}. Lý do: ${message}`);
+    
+    // Cập nhật trạng thái thanh toán trong DB
+    renterModel.updateContractPaymentStatus(orderId, {
+      payment_status: 'Unpaid',
+      message: message,
+    }).then(() => {
+      res.redirect('http://localhost:3000/my-room');
+    }).catch((err) => {
+      console.error('Lỗi khi cập nhật trạng thái thanh toán thất bại trong DB:', err);
+      res.status(500).send('Lỗi server khi cập nhật thông tin thanh toán thất bại.');
+    });
+  }
 };

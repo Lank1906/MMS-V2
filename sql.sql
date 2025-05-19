@@ -76,7 +76,7 @@ CREATE TABLE Contracts (
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) ON DELETE CASCADE,
     FOREIGN KEY (renter_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     is_active BOOLEAN DEFAULT TRUE, -- Trạng thái hoạt động của hợp đồng (TRUE = hoạt động, FALSE = không hoạt động)
-    payment_status ENUM('Unpaid', 'Paid') DEFAULT 'Unpaid',
+    payment_status ENUM('Unpaid', 'Paid','Failed') DEFAULT 'Unpaid',
     payment_date DATE,
     payment_method ENUM('Cash', 'Bank Transfer', 'Credit Card')
 );
@@ -134,16 +134,16 @@ VALUES
 -- Thêm dữ liệu vào bảng RoomTypes (Loại phòng)
 INSERT INTO RoomTypes (name, description, max_occupants, rent_price, electricity_price, water_price, charge_type, is_active)
 VALUES 
-('Phòng đơn', 'Phòng cho 1 người, có giường và bàn làm việc.', 1, 2000000.00, 3.00, 2.50, 'per_person', TRUE),
-('Phòng đôi', 'Phòng cho 2 người, có giường đôi và tủ đồ.', 2, 3500000.00, 3.00, 3.00, 'per_person', TRUE),
-('Phòng chung cư', 'Phòng lớn cho 4 người, có bếp và phòng khách riêng.', 4, 6000000.00, 3.50, 3.50, 'per_person', TRUE),
-('Phòng VIP', 'Phòng có đầy đủ tiện nghi, phù hợp cho 1-2 người.', 2, 4500000.00, 3.50, 3.00, 'per_person', TRUE),
-('Phòng studio', 'Phòng nhỏ tiện nghi, có bếp riêng.', 1, 3000000.00, 2.50, 2.00, 'per_unit', TRUE),
-('Phòng ghép', 'Phòng cho 3 người ở chung.', 3, 4000000.00, 2.80, 2.80, 'per_person', TRUE),
-('Phòng ngủ lớn', 'Phòng cho 4 người, có khu vực sinh hoạt chung.', 4, 5500000.00, 3.20, 3.20, 'per_person', TRUE),
-('Phòng cho gia đình', 'Phòng rộng rãi cho gia đình nhỏ.', 4, 7000000.00, 4.00, 3.80, 'per_person', TRUE),
-('Phòng cao cấp', 'Phòng cho 2 người, có tất cả tiện nghi hiện đại.', 2, 8000000.00, 4.50, 4.00, 'per_unit', TRUE),
-('Phòng 3 tầng', 'Phòng lớn, có sân thượng và phòng khách riêng.', 6, 12000000.00, 5.00, 4.50, 'per_unit', TRUE);
+('Phòng đơn', 'Phòng cho 1 người, có giường và bàn làm việc.', 1, 2000000, 3500, 50000, 'per_person', TRUE),
+('Phòng đôi', 'Phòng cho 2 người, có giường đôi và tủ đồ.', 2, 3500000, 3500, 50000, 'per_person', TRUE),
+('Phòng chung cư', 'Phòng lớn cho 4 người, có bếp và phòng khách riêng.', 4, 6000000, 3500, 50000, 'per_person', TRUE),
+('Phòng VIP', 'Phòng có đầy đủ tiện nghi, phù hợp cho 1-2 người.', 2, 4500000, 3500, 50000, 'per_person', TRUE),
+('Phòng studio', 'Phòng nhỏ tiện nghi, có bếp riêng.', 1, 3000000, 3500, 50000, 'per_unit', TRUE),
+('Phòng ghép', 'Phòng cho 3 người ở chung.', 3, 4000000, 3500, 50000, 'per_person', TRUE),
+('Phòng ngủ lớn', 'Phòng cho 4 người, có khu vực sinh hoạt chung.', 4, 5500000, 3500, 50000, 'per_person', TRUE),
+('Phòng cho gia đình', 'Phòng rộng rãi cho gia đình nhỏ.', 4, 7000000, 3500, 50000, 'per_person', TRUE),
+('Phòng cao cấp', 'Phòng cho 2 người, có tất cả tiện nghi hiện đại.', 2, 8000000,3500, 50000, 'per_unit', TRUE),
+('Phòng 3 tầng', 'Phòng lớn, có sân thượng và phòng khách riêng.', 6, 12000000, 3500, 50000, 'per_unit', TRUE);
 
 -- Thêm dữ liệu vào bảng Rooms (Phòng)
 INSERT INTO Rooms (property_id, room_type_id, room_number, max_occupants, current_occupants, current_water_usage, current_electricity_usage, status, is_active)

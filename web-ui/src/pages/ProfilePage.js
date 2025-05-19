@@ -67,6 +67,7 @@ const ProfilePage = () => {
           <div className="profile-field">
             <label htmlFor="fullName">Họ và tên:</label>
             <input
+              className='input'
               type="text"
               id="fullName"
               name="username"
@@ -78,6 +79,7 @@ const ProfilePage = () => {
           <div className="profile-field">
             <label htmlFor="email">Email:</label>
             <input
+              className='input'
               type="email"
               id="email"
               name="email"
@@ -89,6 +91,7 @@ const ProfilePage = () => {
           <div className="profile-field">
             <label htmlFor="phone">Số điện thoại:</label>
             <input
+              className='input'
               type="text"
               id="phone"
               name="phone"
@@ -100,6 +103,7 @@ const ProfilePage = () => {
           <div className="profile-field">
             <label htmlFor="address">Địa chỉ:</label>
             <input
+              className='input'
               type="text"
               id="address"
               name="address"

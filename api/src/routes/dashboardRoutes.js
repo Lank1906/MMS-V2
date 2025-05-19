@@ -1,9 +1,10 @@
 const express = require('express');
-const dashboardController = require('../controllers/dashboardController');
-
 const router = express.Router();
+const dashboardController = require('../controllers/dashboardController');
+const { authenticate } = require('../middleware/authMiddleware');
 
-// Route để lấy dữ liệu Dashboard
-router.get('/dashboard', dashboardController.getDashboard);
+router.get('/', authenticate, dashboardController.getDashboard);
+router.get('/landlord-revenue', authenticate, dashboardController.getLandlordRevenue);
+router.get('/renter-revenue', authenticate, dashboardController.getRenterRevenue);
 
 module.exports = router;

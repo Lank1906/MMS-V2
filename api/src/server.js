@@ -33,7 +33,7 @@ app.use(express.json());
 
 // Đăng ký routes
 app.use('/api/auth', authRoutes);
-app.use('/api', dashboardRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);

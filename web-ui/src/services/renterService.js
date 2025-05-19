@@ -103,6 +103,24 @@ export const updateProfile = async (data) => {
   }
 };
 
+export const createPayment = async (amount, orderId, orderInfo, redirectUrl, ipnUrl) => {
+  try {
+    const res = await axios.post(`${API_URL}/create-payment`, {
+      amount,
+      orderId,
+      orderInfo,
+      redirectUrl,
+      ipnUrl,
+    }, {
+      headers: { Authorization: getToken() },
+    });
+    return res.data;  // trả về payUrl
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    throw error;
+  }
+};
+
 export default {
   getAvailableRooms,
   getRoomById,
@@ -111,4 +129,5 @@ export default {
   leaveRoom,
   getProfile,
   updateProfile,
+  createPayment
 };

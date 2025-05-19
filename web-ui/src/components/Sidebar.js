@@ -30,6 +30,7 @@ const Sidebar = () => {
 
         {currentUser.role === 'Landlord' && (
           <>
+            <li><Link to="/dashboard" className="menu-item">📊 Dashboard</Link></li>
             <li><Link to="/property-management" className="menu-item">🏘 Quản lý cụm nhà trọ</Link></li>
             <li><Link to="/room-management" className="menu-item">🏠 Quản lý phòng</Link></li>
             <li><Link to="/room-type-management" className="menu-item">⚙️ Quản lý loại phòng</Link></li>
