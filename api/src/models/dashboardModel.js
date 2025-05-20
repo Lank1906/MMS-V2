@@ -132,3 +132,55 @@ exports.getRenterRevenueData = async () => {
     });
   });
 };
+
+exports.getLandlordDashboardData = async (landlordId) => {
+  const [rooms] = await db.promise().query(`
+    SELECT status FROM Rooms
+    WHERE property_id IN (
+      SELECT property_id FROM Properties WHERE landlord_id = ?
+    )
+  `, [landlordId]);
+
+  const [renterCount] = await db.promise().query(`
+    SELECT COUNT(*) as total FROM Room_Renters rr
+    JOIN Rooms r ON rr.room_id = r.room_id
+    JOIN Properties p ON r.property_id = p.property_id
+    WHERE rr.status = 'Active' AND p.landlord_id = ?
+  `, [landlordId]);
+
+  const [utilitySum] = await db.promise().query(`
+    SELECT 
+      SUM(r.current_electricity_usage * rt.electricity_price) AS totalElectricity,
+      SUM(r.current_water_usage * rt.water_price) AS totalWater
+    FROM Rooms r
+    JOIN RoomTypes rt ON r.room_type_id = rt.room_type_id
+    JOIN Properties p ON r.property_id = p.property_id
+    WHERE p.landlord_id = ?
+  `, [landlordId]);
+
+  const [monthlyRevenue] = await db.promise().query(`
+    SELECT 
+      DATE_FORMAT(c.payment_date, '%Y-%m') as month,
+      SUM(c.rent_price + c.total_water_price + c.total_electricity_price + c.total_service_price) AS revenue
+    FROM Contracts c
+    JOIN Rooms r ON c.room_id = r.room_id
+    JOIN Properties p ON r.property_id = p.property_id
+    WHERE p.landlord_id = ? AND c.payment_status = 'Paid'
+      AND c.payment_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+    GROUP BY month
+    ORDER BY month ASC
+  `, [landlordId]);
+
+  const totalRooms = rooms.length;
+  const rentedRooms = rooms.filter(r => r.status === 'Rented').length;
+  const availableRooms = totalRooms - rentedRooms;
+
+  return {
+    rentedRooms,
+    availableRooms,
+    renterCount: renterCount[0].total,
+    totalElectricity: utilitySum[0].totalElectricity || 0,
+    totalWater: utilitySum[0].totalWater || 0,
+    monthlyRevenue
+  };
+};
