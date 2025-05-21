@@ -74,6 +74,7 @@ const FreeRoomsPage = () => {
           placeholder="Giá từ (VNĐ)"
           value={filters.minPrice}
           onChange={handleInputChange}
+          step={1000}
         />
         <input
           type="number"
@@ -81,6 +82,7 @@ const FreeRoomsPage = () => {
           placeholder="Giá đến (VNĐ)"
           value={filters.maxPrice}
           onChange={handleInputChange}
+          step={1000}
         />
         <button type="submit">Tìm kiếm</button>
       </form>
@@ -105,7 +107,7 @@ const FreeRoomsPage = () => {
               <h3>Phòng {room.room_number}</h3>
               <p><b>Địa chỉ:</b> {room.property_address}</p>
               <p><b>Loại phòng:</b> {room.room_type_name}</p>
-              <p className="price">{room.rent_price.toLocaleString()} VNĐ/tháng</p>
+              <p className="price">{Number(room.rent_price).toLocaleString('vi-VN')} VNĐ/tháng</p>
               <a href={`/renter-room-detail/${room.room_id}`} className="rent-button">Thuê ngay</a>
             </div>
           </div>

@@ -143,7 +143,7 @@ const ServiceManagementPage = () => {
               <tr key={s.service_id}>
                 <td>{s.service_name}</td>
                 <td>{s.service_description || '-'}</td>
-                <td>{s.service_price?.toLocaleString()} VNĐ</td>
+                <td>{Number(s.service_price)?.toLocaleString('vi-VN')} VNĐ</td>
                 <td className="actions">
                   <button className="btn edit" onClick={() => openFormForEdit(s)}>Sửa</button>
                   <button className="btn delete" onClick={() => handleDelete(s.service_id)}>Xóa</button>
@@ -200,6 +200,7 @@ const ServiceManagementPage = () => {
                   onChange={handleChange}
                   required
                   placeholder="Nhập giá dịch vụ"
+                  step={1000}
                 />
               </label>
 

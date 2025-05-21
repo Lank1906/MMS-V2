@@ -191,13 +191,13 @@ const RoomDetailPage = () => {
                             <div className="value">{room.max_occupants || 0}</div>
 
                             <div className="label">Giá thuê phòng</div>
-                            <div className="value">{room.rent_price?.toLocaleString() || '0'} đ</div>
+                            <div className="value">{Number(room.rent_price)?.toLocaleString('vi-VN') || '0'} đ</div>
 
                             <div className="label">Giá điện (đ/kWh)</div>
-                            <div className="value">{room.electricity_price || '0'}</div>
+                            <div className="value">{Number(room.electricity_price)?.toLocaleString('vi-VN') || '0'} đ</div>
 
                             <div className="label">Giá nước (đ/m³)</div>
-                            <div className="value">{room.water_price || '0'}</div>
+                            <div className="value">{Number(room.water_price)?.toLocaleString('vi-VN') || '0'} đ</div>
 
                             <div className="label">Loại tính phí</div>
                             <div className="value">{room.charge_type === 'per_person' ? 'Theo người' : 'Theo đơn vị'}</div>
@@ -225,81 +225,6 @@ const RoomDetailPage = () => {
 
             {/* Phần bên phải: Hợp đồng + Dịch vụ */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {/* Danh sách hợp đồng */}
-                <div style={{
-                    background: '#fff',
-                    padding: 24,
-                    borderRadius: 12,
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                    flexBasis: '33%',
-                    overflowY: 'auto',
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <h2 style={{ margin: 0, color: '#333' }}>Hợp đồng phòng</h2>
-                        <button
-                            onClick={() => setShowContractModal(true)}
-                            style={{
-                                background: '#3f51b5',
-                                color: 'white',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                fontWeight: '600'
-                            }}
-                        >
-                            + Thêm hợp đồng
-                        </button>
-                    </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                        <thead>
-                            <tr style={{ background: '#3f51b5', color: 'white', textAlign: 'left' }}>
-                                <th style={{ padding: 12 }}>Ngày bắt đầu</th>
-                                <th style={{ padding: 12 }}>Ngày kết thúc</th>
-                                <th style={{ padding: 12 }}>Tiền thuê</th>
-                                <th style={{ padding: 12 }}>Tiền nước</th>
-                                <th style={{ padding: 12 }}>Tiền điện</th>
-                                <th style={{ padding: 12 }}>Tiền dịch vụ</th>
-                                <th style={{ padding: 12 }}>Trạng thái</th>
-                                <th style={{ padding: 12 }}>Phương thức</th>
-                                <th style={{ padding: 12 }}>Trang thái thanh toán</th>
-                                <th style={{ padding: 12 }}>Ngày</th>
-                                <th style={{ padding: 12 }}>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {contracts.length === 0 ? (
-                                <tr>
-                                    <td colSpan="8" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
-                                </tr>
-                            ) : (
-                                contracts.map(contract => (
-                                    <tr key={contract.contract_id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: 12 }}>{new Date(contract.start_date).toLocaleDateString()}</td>
-                                        <td style={{ padding: 12 }}>{contract.end_date ? new Date(contract.end_date).toLocaleDateString() : '-'}</td>
-                                        <td style={{ padding: 12 }}>{contract.rent_price.toLocaleString()} đ</td>
-                                        <td style={{ padding: 12 }}>{contract.total_water_price?.toLocaleString() || 0} đ</td>
-                                        <td style={{ padding: 12 }}>{contract.total_electricity_price?.toLocaleString() || 0} đ</td>
-                                        <td style={{ padding: 12 }}>{contract.total_service_price?.toLocaleString() || 0} đ</td>
-                                        <td style={{ padding: 12 }}>{contract.status}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_method}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_status}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_date}</td>
-                                        <td style={{ padding: 12 }}>
-                                            <button
-                                                onClick={() => handleDeleteContract(contract.contract_id)}
-                                                style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                                            >
-                                                Xóa
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
                 {/* Danh sách dịch vụ */}
                 <div style={{
                     background: '#fff',
@@ -337,7 +262,7 @@ const RoomDetailPage = () => {
                                 >
                                     <div>
                                         <div><b>{service.service_name}</b></div>
-                                        <div>Giá: {service.service_price?.toLocaleString()} đ</div>
+                                        <div>Giá: {service.service_price?.toLocaleString('vi-VN')} đ</div>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteService(service.service_id)}
@@ -396,6 +321,80 @@ const RoomDetailPage = () => {
                         </table>
                     )}
                 </div>
+                {/* Danh sách hợp đồng */}
+                <div style={{
+                    background: '#fff',
+                    padding: 24,
+                    borderRadius: 12,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                    flexBasis: '33%',
+                    overflowY: 'auto',
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h2 style={{ margin: 0, color: '#333' }}>Hợp đồng phòng</h2>
+                        <button
+                            onClick={() => setShowContractModal(true)}
+                            style={{
+                                background: '#3f51b5',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: 6,
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            + Thêm hợp đồng
+                        </button>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead>
+                            <tr style={{ background: '#3f51b5', color: 'white', textAlign: 'left' }}>
+                                <th style={{ padding: 12 }}>Ngày bắt đầu</th>
+                                <th style={{ padding: 12 }}>Ngày kết thúc</th>
+                                <th style={{ padding: 12 }}>Tiền thuê</th>
+                                <th style={{ padding: 12 }}>Tiền nước</th>
+                                <th style={{ padding: 12 }}>Tiền điện</th>
+                                <th style={{ padding: 12 }}>Tiền dịch vụ</th>
+                                <th style={{ padding: 12 }}>Trạng thái</th>
+                                <th style={{ padding: 12 }}>Phương thức</th>
+                                <th style={{ padding: 12 }}>Trang thái thanh toán</th>
+                                <th style={{ padding: 12 }}>Ngày</th>
+                                <th style={{ padding: 12 }}>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {contracts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
+                                </tr>
+                            ) : (
+                                contracts.map(contract => (
+                                    <tr key={contract.contract_id} style={{ borderBottom: '1px solid #eee' }}>
+                                        <td style={{ padding: 12 }}>{new Date(contract.start_date).toLocaleDateString()}</td>
+                                        <td style={{ padding: 12 }}>{contract.end_date ? new Date(contract.end_date).toLocaleDateString() : '-'}</td>
+                                        <td style={{ padding: 12 }}>{Number(contract.rent_price).toLocaleString('vi-VN')} đ</td>
+                                        <td style={{ padding: 12 }}>{Number(contract.total_water_price)?.toLocaleString('vi-VN') || 0} đ</td>
+                                        <td style={{ padding: 12 }}>{Number(contract.total_electricity_price)?.toLocaleString('vi-VN') || 0} đ</td>
+                                        <td style={{ padding: 12 }}>{Number(contract.total_service_price)?.toLocaleString('vi-VN') || 0} đ</td>
+                                        <td style={{ padding: 12 }}>{contract.status}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_method}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_status}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_date}</td>
+                                        <td style={{ padding: 12 }}>
+                                            <button
+                                                onClick={() => handleDeleteContract(contract.contract_id)}
+                                                style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                                            >
+                                                Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             {/* Modal thêm hợp đồng */}
             {showContractModal && (
@@ -444,7 +443,7 @@ const RoomDetailPage = () => {
                                 Tiền thuê phòng (theo loại phòng)
                                 <input
                                     type="number"
-                                    value={newContract.rent_price}
+                                    value={newContract.rent_price.toLocaleString('vi-VN')}
                                     readOnly
                                     style={{ padding: 8, borderRadius: 6, border: '1px solid #ccc', width: '100%', backgroundColor: '#eee' }}
                                 />
@@ -473,7 +472,7 @@ const RoomDetailPage = () => {
                                 Tiền nước (tự tính)
                                 <input
                                     type="number"
-                                    value={newContract.total_water_price}
+                                    value={newContract.total_water_price.toLocaleString('vi-VN')}
                                     readOnly
                                     style={{ padding: 8, borderRadius: 6, border: '1px solid #ccc', width: '100%', backgroundColor: '#eee' }}
                                 />
@@ -502,7 +501,7 @@ const RoomDetailPage = () => {
                                 Tiền điện (tự tính)
                                 <input
                                     type="number"
-                                    value={newContract.total_electricity_price}
+                                    value={newContract.total_electricity_price.toLocaleString('vi-VN')}
                                     readOnly
                                     style={{ padding: 8, borderRadius: 6, border: '1px solid #ccc', width: '100%', backgroundColor: '#eee' }}
                                 />
@@ -511,7 +510,7 @@ const RoomDetailPage = () => {
                                 Tổng tiền dịch vụ (tự tính)
                                 <input
                                     type="number"
-                                    value={newContract.total_service_price}
+                                    value={newContract.total_service_price.toLocaleString('vi-VN')}
                                     readOnly
                                     style={{ padding: 8, borderRadius: 6, border: '1px solid #ccc', width: '100%', backgroundColor: '#eee' }}
                                 />

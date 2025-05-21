@@ -170,9 +170,9 @@ const RoomTypeManagementPage = () => {
                   <td>{rt.name}</td>
                   <td>{rt.description}</td>
                   <td>{rt.max_occupants}</td>
-                  <td>{rt.rent_price?.toLocaleString()}</td>
-                  <td>{rt.electricity_price?.toLocaleString()}</td>
-                  <td>{rt.water_price?.toLocaleString()}</td>
+                  <td>{Number(rt.rent_price)?.toLocaleString('vi-VN')}</td>
+                  <td>{Number(rt.electricity_price)?.toLocaleString('vi-VN')}</td>
+                  <td>{Number(rt.water_price)?.toLocaleString('vi-VN')}</td>
                   <td>{rt.charge_type === 'per_person' ? 'Theo người' : 'Theo đơn vị'}</td>
                   <td className="action-buttons">
                     <button onClick={() => openEditModal(rt)}>Sửa</button>

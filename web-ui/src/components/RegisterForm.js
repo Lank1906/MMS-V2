@@ -58,6 +58,7 @@ const RegisterForm = ({ onRegister }) => {
         />
       </div>
       <button type="submit" className="submit-button">Đăng ký</button>
+      <p><a href='/login'>Đã có tài khoản? Đăng nhập</a></p>
     </form>
   );
 };

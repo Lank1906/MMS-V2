@@ -205,20 +205,16 @@ const DashboardPage = () => {
                 <p className="value">{data.renterCount}</p>
               </div>
               <div className="info-card">
-                <p className="label">Thuế sản phẩm dự tính</p>
-                <p className="value">{data.renterCount*100000} VND</p>
-              </div>
-              <div className="info-card">
                 <p className="label">Tiền vệ sinh, an ninh, ...</p>
-                <p className="value">{data.renterCount*10000} VND</p>
+                <p className="value">{(data.renterCount*11000).toLocaleString('vi-VN')} VND</p>
               </div>
               <div className="info-card">
                 <p className="label">Tiền điện dự tính</p>
-                <p className="value">{data.totalElectricity?.toLocaleString()} VND</p>
+                <p className="value">{data.totalElectricity?.toLocaleString('vi-VN')} VND</p>
               </div>
               <div className="info-card">
                 <p className="label">Tiền nước dự tính</p>
-                <p className="value">{data.totalWater?.toLocaleString()} VND</p>
+                <p className="value">{data.totalWater?.toLocaleString('vi-VN')} VND</p>
               </div>
             </div>
           </div>

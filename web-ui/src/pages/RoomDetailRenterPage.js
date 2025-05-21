@@ -16,6 +16,7 @@ const RoomDetailRenterPage = () => {
         setLoading(true);
         const data = await renterService.getRoomById(roomId);
         setRoom(data);
+        console.log(data)
       } catch (err) {
         setError('Lấy thông tin phòng thất bại.');
       } finally {

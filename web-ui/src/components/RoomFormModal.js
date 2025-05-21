@@ -256,9 +256,9 @@ const RoomFormModal = ({ visible, onClose, onSubmit, initialData, filterProperty
               onChange={handleChange}
               disabled={submitting || uploading}
             >
-              <option value="Available">Available</option>
-              <option value="Rented">Rented</option>
-              <option value="Under Maintenance">Under Maintenance</option>
+              <option value="Available">Còn trống</option>
+              <option value="Rented">Đã thuê</option>
+              <option value="Under Maintenance">Đang bảo trì</option>
             </select>
           </label>
 

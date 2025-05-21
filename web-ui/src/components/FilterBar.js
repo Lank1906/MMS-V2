@@ -5,9 +5,9 @@ const FilterBar = ({ filterStatus, setFilterStatus, filterPriceMin, setFilterPri
     <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', marginBottom: 20 }}>
       <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
         <option value="">-- Lọc trạng thái --</option>
-        <option value="Available">Available</option>
-        <option value="Rented">Rented</option>
-        <option value="Under Maintenance">Under Maintenance</option>
+        <option value="Available">Còn trống</option>
+        <option value="Rented">Đã thuê</option>
+        <option value="Under Maintenance">Đang bảo trì</option>
       </select>
 
       <input type="number" placeholder="Giá min" value={filterPriceMin} onChange={e => setFilterPriceMin(e.target.value)} />

@@ -23,7 +23,7 @@ const RoomTable = ({ rooms, onEdit, onDelete }) => {
             <td onClick={() => navigate(`/room-detail/${room.room_id}`)} style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>{room.room_number}</td>
             <td>{room.room_type_name}</td>
             <td>{room.status}</td>
-            <td>{room.rent_price?.toLocaleString('vi-VN')}₫</td>
+            <td>{Number(room.rent_price)?.toLocaleString('vi-VN')}₫</td>
             <td>{room.max_occupants}</td>
             <td>
               <button onClick={() => onEdit(room)}>Sửa</button>{' '}

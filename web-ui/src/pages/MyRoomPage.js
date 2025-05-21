@@ -60,11 +60,10 @@ const MyRoomPage = () => {
 
   const handlePayment = async (contract) => {
     const { contract_id, rent_price } = contract;
-
     // Gọi API tạo thanh toán
     try {
       const paymentData = await createPayment(
-        rent_price, 
+        parseInt(rent_price), 
         contract_id, 
         `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`
       );
@@ -135,10 +134,10 @@ const MyRoomPage = () => {
                   {roomContracts.map(c => (
                     <tr key={c.contract_id}>
                       <td>{c.contract_id}</td>
-                      <td>{c.start_date} - {c.end_date || '-'}</td>
+                      <td> {new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
                       <td>{c.status}</td>
                       <td>{c.payment_status}</td>
-                      <td>{c.rent_price?.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</td>
+                      <td>{Number(c.rent_price)?.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</td>
                       <td>
                         {/* Thêm nút Tạo thanh toán cho hợp đồng chưa thanh toán */}
                         {c.payment_status === 'Unpaid' && (
