@@ -43,7 +43,7 @@ exports.getRoomById = (roomId, callback) => {
     SELECT 
       r.room_id, r.room_number, r.status, r.is_active,r.image_url,
       p.address AS property_address,
-      rt.rent_price,
+      rt.rent_price,rt.description,rt.max_occupants,rt.electricity_price,rt.water_price,
       rt.name AS room_type_name
     FROM Rooms r
     JOIN Properties p ON r.property_id = p.property_id

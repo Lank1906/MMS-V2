@@ -26,14 +26,16 @@ CREATE TABLE Properties (
 -- Bảng RoomTypes (Loại phòng)
 CREATE TABLE RoomTypes (
     room_type_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,               -- Tên loại phòng (Ví dụ: Phòng đơn, Phòng đôi)
-    description TEXT,                         -- Mô tả về loại phòng
-    max_occupants INT,                        -- Số người tối đa trong phòng
-    rent_price DECIMAL(10, 2) NOT NULL,       -- Giá thuê phòng
-    electricity_price DECIMAL(10, 2),         -- Đơn giá điện cho mỗi kWh
-    water_price DECIMAL(10, 2),               -- Đơn giá nước cho mỗi m3
-    charge_type ENUM('per_person', 'per_unit') DEFAULT 'per_person', -- Loại tính phí: theo người hay theo đơn vị
-    is_active BOOLEAN DEFAULT TRUE -- Trạng thái hoạt động của loại phòng (TRUE = hoạt động, FALSE = không hoạt động)
+    landlord_id INT NOT NULL,                       -- Chủ trọ sở hữu loại phòng
+    name VARCHAR(100) NOT NULL,                     -- Tên loại phòng (Phòng đơn, đôi...)
+    description TEXT,                               -- Mô tả loại phòng
+    max_occupants INT,                              -- Số người tối đa
+    rent_price DECIMAL(10, 2) NOT NULL,             -- Giá thuê
+    electricity_price DECIMAL(10, 2),               -- Giá điện/kWh
+    water_price DECIMAL(10, 2),                     -- Giá nước/m3
+    charge_type ENUM('per_person', 'per_unit') DEFAULT 'per_person', -- Cách tính phí
+    is_active BOOLEAN DEFAULT TRUE,                 -- Trạng thái hoạt động
+    FOREIGN KEY (landlord_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 -- Bảng Rooms (Phòng)
@@ -55,11 +57,14 @@ CREATE TABLE Rooms (
 -- Bảng Services (Dịch vụ phòng)
 CREATE TABLE Services (
     service_id INT AUTO_INCREMENT PRIMARY KEY,
-    service_name VARCHAR(255) NOT NULL,
-    service_description TEXT,
-    service_price DECIMAL(10, 2), -- Giá dịch vụ
-    is_active BOOLEAN DEFAULT TRUE -- Trạng thái hoạt động của dịch vụ (TRUE = hoạt động, FALSE = không hoạt động)
+    landlord_id INT NOT NULL,                       -- Chủ trọ sở hữu dịch vụ
+    service_name VARCHAR(255) NOT NULL,             -- Tên dịch vụ
+    service_description TEXT,                       -- Mô tả dịch vụ
+    service_price DECIMAL(10, 2),                   -- Giá dịch vụ
+    is_active BOOLEAN DEFAULT TRUE,                 -- Trạng thái hoạt động
+    FOREIGN KEY (landlord_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
 
 -- Bảng Contracts (Hợp đồng thuê)
 CREATE TABLE Contracts (
@@ -132,18 +137,18 @@ VALUES
 (4, 'Nhà Trọ Quang Nam', 'Số 300, Đường Nguyễn Huệ, TP.HCM', '0912345682', TRUE);
 
 -- Thêm dữ liệu vào bảng RoomTypes (Loại phòng)
-INSERT INTO RoomTypes (name, description, max_occupants, rent_price, electricity_price, water_price, charge_type, is_active)
+INSERT INTO RoomTypes (name, description, max_occupants, rent_price, electricity_price, water_price, charge_type, is_active,landlord_id)
 VALUES 
-('Phòng đơn', 'Phòng cho 1 người, có giường và bàn làm việc.', 1, 2000000, 3500, 50000, 'per_person', TRUE),
-('Phòng đôi', 'Phòng cho 2 người, có giường đôi và tủ đồ.', 2, 3500000, 3500, 50000, 'per_person', TRUE),
-('Phòng chung cư', 'Phòng lớn cho 4 người, có bếp và phòng khách riêng.', 4, 6000000, 3500, 50000, 'per_person', TRUE),
-('Phòng VIP', 'Phòng có đầy đủ tiện nghi, phù hợp cho 1-2 người.', 2, 4500000, 3500, 50000, 'per_person', TRUE),
-('Phòng studio', 'Phòng nhỏ tiện nghi, có bếp riêng.', 1, 3000000, 3500, 50000, 'per_unit', TRUE),
-('Phòng ghép', 'Phòng cho 3 người ở chung.', 3, 4000000, 3500, 50000, 'per_person', TRUE),
-('Phòng ngủ lớn', 'Phòng cho 4 người, có khu vực sinh hoạt chung.', 4, 5500000, 3500, 50000, 'per_person', TRUE),
-('Phòng cho gia đình', 'Phòng rộng rãi cho gia đình nhỏ.', 4, 7000000, 3500, 50000, 'per_person', TRUE),
-('Phòng cao cấp', 'Phòng cho 2 người, có tất cả tiện nghi hiện đại.', 2, 8000000,3500, 50000, 'per_unit', TRUE),
-('Phòng 3 tầng', 'Phòng lớn, có sân thượng và phòng khách riêng.', 6, 12000000, 3500, 50000, 'per_unit', TRUE);
+('Phòng đơn', 'Phòng cho 1 người, có giường và bàn làm việc.', 1, 2000000, 3500, 50000, 'per_person', TRUE,2),
+('Phòng đôi', 'Phòng cho 2 người, có giường đôi và tủ đồ.', 2, 3500000, 3500, 50000, 'per_person', TRUE,3),
+('Phòng chung cư', 'Phòng lớn cho 4 người, có bếp và phòng khách riêng.', 4, 6000000, 3500, 50000, 'per_person', TRUE,4),
+('Phòng VIP', 'Phòng có đầy đủ tiện nghi, phù hợp cho 1-2 người.', 2, 4500000, 3500, 50000, 'per_person', TRUE,2),
+('Phòng studio', 'Phòng nhỏ tiện nghi, có bếp riêng.', 1, 3000000, 3500, 50000, 'per_unit', TRUE,3),
+('Phòng ghép', 'Phòng cho 3 người ở chung.', 3, 4000000, 3500, 50000, 'per_person', TRUE,4),
+('Phòng ngủ lớn', 'Phòng cho 4 người, có khu vực sinh hoạt chung.', 4, 5500000, 3500, 50000, 'per_person', TRUE,2),
+('Phòng cho gia đình', 'Phòng rộng rãi cho gia đình nhỏ.', 4, 7000000, 3500, 50000, 'per_person', TRUE,3),
+('Phòng cao cấp', 'Phòng cho 2 người, có tất cả tiện nghi hiện đại.', 2, 8000000,3500, 50000, 'per_unit', TRUE,4),
+('Phòng 3 tầng', 'Phòng lớn, có sân thượng và phòng khách riêng.', 6, 12000000, 3500, 50000, 'per_unit', TRUE,2);
 
 -- Thêm dữ liệu vào bảng Rooms (Phòng)
 INSERT INTO Rooms (property_id, room_type_id, room_number, max_occupants, current_occupants, current_water_usage, current_electricity_usage, status, is_active)
@@ -169,32 +174,32 @@ VALUES
 (10, 5, 'C1', 4, 4, 15.00, 7.00, 'Available', TRUE);
 
 -- Thêm dữ liệu vào bảng Services (Dịch vụ phòng)
-INSERT INTO Services (service_name, service_description, service_price, is_active)
+INSERT INTO Services (service_name, service_description, service_price, is_active,landlord_id)
 VALUES 
-('Internet', 'Dịch vụ Internet tốc độ cao cho mỗi phòng', 200000.00, TRUE),
-('Giặt là', 'Dịch vụ giặt ủi cho khách thuê phòng', 100000.00, TRUE),
-('Bảo vệ', 'Dịch vụ bảo vệ 24/7 cho khu nhà trọ', 300000.00, TRUE),
-('Dọn vệ sinh', 'Dịch vụ dọn dẹp phòng định kỳ', 150000.00, TRUE),
-('Cáp truyền hình', 'Dịch vụ cáp truyền hình cho mỗi phòng', 180000.00, TRUE),
-('Máy lạnh', 'Dịch vụ thuê máy lạnh riêng cho phòng', 500000.00, TRUE),
-('Giữ xe', 'Dịch vụ giữ xe cho cư dân', 100000.00, TRUE),
-('Sửa chữa', 'Dịch vụ sửa chữa trong phòng', 250000.00, TRUE),
-('Điện thoại', 'Dịch vụ điện thoại nội bộ', 30000.00, TRUE),
-('Cà phê', 'Dịch vụ cà phê cho các phòng VIP', 50000.00, TRUE);
+('Internet', 'Dịch vụ Internet tốc độ cao cho mỗi phòng', 200000, TRUE,2),
+('Giặt là', 'Dịch vụ giặt ủi cho khách thuê phòng', 100000, TRUE,3),
+('Bảo vệ', 'Dịch vụ bảo vệ 24/7 cho khu nhà trọ', 300000, TRUE,4),
+('Dọn vệ sinh', 'Dịch vụ dọn dẹp phòng định kỳ', 150000, TRUE,2),
+('Cáp truyền hình', 'Dịch vụ cáp truyền hình cho mỗi phòng', 180000, TRUE,3),
+('Máy lạnh', 'Dịch vụ thuê máy lạnh riêng cho phòng', 500000, TRUE,4),
+('Giữ xe', 'Dịch vụ giữ xe cho cư dân', 100000, TRUE,2),
+('Sửa chữa', 'Dịch vụ sửa chữa trong phòng', 250000, TRUE,3),
+('Điện thoại', 'Dịch vụ điện thoại nội bộ', 30000, TRUE,4),
+('Cà phê', 'Dịch vụ cà phê cho các phòng VIP', 50000, TRUE,2);
 
 -- Thêm dữ liệu vào bảng Contracts (Hợp đồng thuê)
 INSERT INTO Contracts (room_id, renter_id, start_date, end_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, is_active,payment_method)
 VALUES 
-(1, 5, '2023-01-01', '2023-12-31', 2000000.00, 50.00, 60.00, 200000.00, 'Active', TRUE, 'Bank Transfer'),
-(2, 5, '2023-05-01', '2024-05-01', 3500000.00, 80.00, 90.00, 150000.00, 'Active', TRUE, 'Bank Transfer'),
-(3, 6, '2023-03-01', '2024-03-01', 6000000.00, 100.00, 150.00, 250000.00, 'Completed', TRUE, 'Bank Transfer'),
-(7, 7, '2023-06-01', '2024-06-01', 4500000.00, 60.00, 70.00, 100000.00, 'Active', TRUE, 'Bank Transfer'),
-(4, 8, '2023-04-01', '2024-04-01', 3000000.00, 60.00, 75.00, 180000.00, 'Active', TRUE, 'Bank Transfer'),
-(5, 9, '2023-07-01', '2024-07-01', 4000000.00, 90.00, 120.00, 200000.00, 'Active', TRUE, 'Bank Transfer'),
-(6, 10, '2023-02-01', '2024-02-01', 3500000.00, 80.00, 85.00, 150000.00, 'Active', TRUE, 'Bank Transfer'),
-(2, 9, '2023-08-01', '2024-08-01', 4200000.00, 75.00, 100.00, 175000.00, 'Completed', TRUE, 'Bank Transfer'),
-(1, 8, '2023-11-01', '2024-11-01', 2500000.00, 55.00, 65.00, 190000.00, 'Terminated', TRUE, 'Bank Transfer'),
-(3, 7, '2023-01-15', '2024-01-15', 3800000.00, 70.00, 80.00, 210000.00, 'Active', TRUE, 'Bank Transfer');
+(1, 5, '2023-01-01', '2023-12-31', 2000000, 50000, 60000, 200000, 'Active', TRUE, 'Bank Transfer'),
+(2, 5, '2023-05-01', '2024-05-01', 3500000, 80000, 90000, 150000, 'Active', TRUE, 'Bank Transfer'),
+(3, 6, '2023-03-01', '2024-03-01', 6000000, 100000, 150000, 250000, 'Completed', TRUE, 'Bank Transfer'),
+(7, 7, '2023-06-01', '2024-06-01', 4500000, 60000, 70000, 100000, 'Active', TRUE, 'Bank Transfer'),
+(4, 8, '2023-04-01', '2024-04-01', 3000000, 60000, 75000, 180000, 'Active', TRUE, 'Bank Transfer'),
+(5, 9, '2023-07-01', '2024-07-01', 4000000, 90000, 120000, 200000, 'Active', TRUE, 'Bank Transfer'),
+(6, 10, '2023-02-01', '2024-02-01', 3500000, 80000, 85000, 150000, 'Active', TRUE, 'Bank Transfer'),
+(2, 9, '2023-08-01', '2024-08-01', 4200000, 75000, 100000, 175000, 'Completed', TRUE, 'Bank Transfer'),
+(1, 8, '2023-11-01', '2024-11-01', 2500000, 55000, 65000, 190000, 'Terminated', TRUE, 'Bank Transfer'),
+(3, 7, '2023-01-15', '2024-01-15', 3800000, 70000, 80000, 210000, 'Active', TRUE, 'Bank Transfer');
 
 -- Thêm dữ liệu vào bảng Room_Services (Liên kết phòng với dịch vụ sử dụng)
 INSERT INTO Room_Services (room_id, service_id, is_active)

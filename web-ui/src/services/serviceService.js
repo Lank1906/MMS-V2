@@ -11,7 +11,7 @@ const getToken = () => {
 
 // Lấy danh sách dịch vụ, phân trang, tìm kiếm theo tên
 export const getServices = async (page = 1, limit = 10, search = '') => {
-  const res = await axios.get(API_URL, {
+  const res = await axios.get(API_URL+`?page=${page}&limit=${limit}&search=${search}`, {
     headers: { Authorization: getToken() },
     params: { page, limit, search }
   });

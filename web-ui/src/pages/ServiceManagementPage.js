@@ -23,13 +23,12 @@ const ServiceManagementPage = () => {
     setLoading(true);
     try {
       const res = await getServices(page, limit, search);
-      // ✅ Phòng thủ an toàn ở FE
       if (Array.isArray(res)) {
         setServices(res);
         setTotal(res.length);
-      } else if (res.services) {
-        setServices(res.services);
-        setTotal(res.total ?? res.services.length);
+      } else if (res.data) {
+        setServices(res.data);
+        setTotal(res.total ?? res.data.length);
       } else {
         setServices([]);
         setTotal(0);
@@ -156,9 +155,17 @@ const ServiceManagementPage = () => {
 
       {totalPages > 1 && (
         <div className="pagination">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)}>◀ Trang trước</button>
-          <span>Trang {page} / {totalPages}</span>
-          <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>Trang sau ▶</button>
+          <button disabled={page === 1} onClick={() => setPage(page - 1)}>◀</button>
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              className={page === i + 1 ? 'active' : ''}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>▶</button>
         </div>
       )}
 

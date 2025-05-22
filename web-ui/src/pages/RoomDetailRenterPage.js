@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import renterService from '../services/renterService'; // Đường dẫn tùy file bạn lưu
+import renterService from '../services/renterService';
 
 const RoomDetailRenterPage = () => {
   const { roomId } = useParams();
-
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,7 +15,6 @@ const RoomDetailRenterPage = () => {
         setLoading(true);
         const data = await renterService.getRoomById(roomId);
         setRoom(data);
-        console.log(data)
       } catch (err) {
         setError('Lấy thông tin phòng thất bại.');
       } finally {
@@ -28,7 +26,6 @@ const RoomDetailRenterPage = () => {
 
   const handleRent = async () => {
     try {
-      // Giả sử rentRoom cần room_id và rent_price
       await renterService.rentRoom({
         room_id: room.room_id,
         rent_price: room.rent_price,
@@ -36,7 +33,7 @@ const RoomDetailRenterPage = () => {
       alert('Bạn đã thuê phòng thành công!');
       setIsRented(true);
     } catch (err) {
-      alert(err.response.data.error);
+      alert(err.response?.data?.error || 'Lỗi khi thuê phòng');
     }
   };
 
@@ -45,81 +42,108 @@ const RoomDetailRenterPage = () => {
   if (!room) return <p>Không tìm thấy phòng.</p>;
 
   return (
-    <div className="room-detail-container">
-      <h2>Chi tiết phòng (ID: {room.room_id})</h2>
-      <div className="room-info">
-        <p><b>Số phòng:</b> {room.room_number}</p>
-        <p><b>Địa chỉ:</b> {room.property_address}</p>
-        <p><b>Giá thuê:</b> {room.rent_price.toLocaleString()} VNĐ</p>
-        <p><b>Loại phòng:</b> {room.room_type_name}</p>
+    <div className="room-container">
+      <div className="room-card">
+        <img
+          className="room-image"
+          src={room.image_url || 'https://via.placeholder.com/500x300?text=No+Image'}
+          alt="Phòng"
+        />
+        <div className="room-content">
+          <h2>{room.room_type_name}</h2>
+          <p><strong>Số phòng:</strong> {room.room_number}</p>
+          <p><strong>Địa chỉ:</strong> {room.property_address}</p>
+          <p><strong>Giá thuê:</strong> {Number(room.rent_price).toLocaleString('vi-VN')} VNĐ</p>
+          <p><strong>Giá điện:</strong> {Number(room.electricity_price).toLocaleString('vi-VN')} VNĐ/kWh</p>
+          <p><strong>Giá nước:</strong> {Number(room.water_price).toLocaleString('vi-VN')} VNĐ/m³</p>
+          <p><strong>Sức chứa tối đa:</strong> {room.max_occupants} người</p>
+          <p><strong>Trạng thái:</strong> {room.status === 'Available' ? 'Còn trống' : 'Đã thuê hoặc bảo trì'}</p>
+          <p><strong>Mô tả:</strong> {room.description || 'Không có mô tả.'}</p>
+
+          {!isRented && room.status === 'Available' ? (
+            <button className="rent-button" onClick={handleRent}>Thuê phòng này</button>
+          ) : (
+            <p className="rented-msg">{isRented ? 'Bạn đang thuê phòng này.' : 'Phòng hiện không sẵn sàng.'}</p>
+          )}
+        </div>
       </div>
 
-      {!isRented ? (
-        <button className="rent-btn" onClick={handleRent}>Thuê phòng này</button>
-      ) : (
-        <p className="rented-msg">Bạn đang thuê phòng này.</p>
-      )}
-
       <style>{`
-        .room-detail-container {
-          max-width: 500px;
-          margin: 20px auto;
+        .room-container {
           padding: 24px;
-          background: #fff;
-          box-shadow: 0 0 10px rgb(0 0 0 / 0.1);
-          border-radius: 12px;
+          display: flex;
+          justify-content: center;
+        }
+
+        .room-card {
+          max-width: 800px;
+          width: 100%;
+          background: white;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+          overflow: hidden;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .room-image {
+          width: 100%;
+          height: 300px;
+          object-fit: cover;
+        }
+
+        .room-content {
+          padding: 24px;
+        }
+
+        .room-content h2 {
+          font-size: 24px;
+          margin-bottom: 16px;
           color: #333;
         }
-        h2 {
-          margin-bottom: 20px;
-          font-weight: 600;
-          text-align: center;
-          color: #222;
-        }
-        .room-info p {
-          font-size: 16px;
+
+        .room-content p {
           margin: 8px 0;
-          line-height: 1.4;
+          font-size: 16px;
         }
-        .room-info b {
-          color: #555;
-        }
-        .rent-btn {
-          display: block;
-          width: 100%;
-          padding: 12px;
-          margin-top: 24px;
+
+        .rent-button {
+          margin-top: 20px;
+          padding: 12px 20px;
+          font-size: 16px;
+          font-weight: bold;
+          color: white;
           background-color: #007bff;
           border: none;
           border-radius: 8px;
-          color: white;
-          font-size: 16px;
-          font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.25s ease;
         }
-        .rent-btn:hover {
+
+        .rent-button:hover {
           background-color: #0056b3;
         }
+
         .rented-msg {
-          margin-top: 24px;
-          font-weight: 600;
-          color: #28a745;
-          text-align: center;
+          margin-top: 20px;
           font-size: 16px;
+          font-weight: bold;
+          color: #28a745;
         }
-        @media (max-width: 600px) {
-          .room-detail-container {
-            margin: 10px;
-            padding: 16px;
+
+        @media (max-width: 768px) {
+          .room-image {
+            height: 200px;
           }
-          h2 {
+
+          .room-content h2 {
             font-size: 20px;
           }
-          .rent-btn {
+
+          .room-content p {
             font-size: 14px;
-            padding: 10px;
+          }
+
+          .rent-button {
+            font-size: 14px;
           }
         }
       `}</style>

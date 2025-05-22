@@ -4,8 +4,9 @@ exports.getRoomTypes = (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 15;
   const search = req.query.search || '';
+  console.log(req.user)
 
-  roomTypeModel.getRoomTypes(page, limit, search, (err, data) => {
+  roomTypeModel.getRoomTypes(req.user.user_id,page, limit, search, (err, data) => {
     if (err) return res.status(500).json({ error: 'Lỗi server khi lấy danh sách loại phòng' });
     res.json(data);
   });
@@ -23,6 +24,7 @@ exports.getRoomTypeById = (req, res) => {
 
 exports.createRoomType = (req, res) => {
   const data = req.body;
+  data.landlord_id=req.user.user_id
   if (!data.name || !data.rent_price || !data.max_occupants) {
     return res.status(400).json({ error: 'Tên, giá thuê và số người tối đa là bắt buộc' });
   }

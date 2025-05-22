@@ -1,11 +1,17 @@
 const serviceModel = require('../models/serviceModel');
 
-// Lấy danh sách dịch vụ
+// Controller: Lấy danh sách dịch vụ có phân trang
 exports.getServices = (req, res) => {
-  serviceModel.getServices((err, services) => {
-    if (err) return res.status(500).json({ error: 'Lỗi server khi lấy danh sách dịch vụ' });
-    res.json(services);
-  });
+  const landlord_id = req.user.user_id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  serviceModel.getServices(landlord_id, (err, services) => {
+    if (err) {
+      return res.status(500).json({ error: 'Lỗi server khi lấy danh sách dịch vụ' });
+    }
+    res.json({ data: services, page, limit });
+  }, page, limit);
 };
 
 // Lấy chi tiết dịch vụ
@@ -21,6 +27,7 @@ exports.getServiceById = (req, res) => {
 // Thêm dịch vụ
 exports.createService = (req, res) => {
   const data = req.body;
+  data.landlord_id=req.user.user_id
   if (!data.service_name || !data.service_price) {
     return res.status(400).json({ error: 'Tên và giá dịch vụ không được để trống' });
   }
