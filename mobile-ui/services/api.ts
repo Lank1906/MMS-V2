@@ -100,14 +100,13 @@ export const updateProfile = async (data: any) => {
   return res.data;
 };
 
-export const createPayment = async (amount: number, orderId: string, orderInfo: string, redirectUrl: string, ipnUrl: string) => {
+export const createPayment = async (amount: number, orderId: string, orderInfo: string, redirectLink: string) => {
   const token = await getToken();
   const res = await axios.post(`${RENTER_URL}/create-payment`, {
     amount,
     orderId,
     orderInfo,
-    redirectUrl,
-    ipnUrl,
+    redirectLink,
   }, {
     headers: { Authorization: token },
   });

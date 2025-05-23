@@ -103,14 +103,13 @@ export const updateProfile = async (data) => {
   }
 };
 
-export const createPayment = async (amount, orderId, orderInfo, redirectUrl, ipnUrl) => {
+export const createPayment = async (amount, orderId, orderInfo, redirectLink) => {
   try {
     const res = await axios.post(`${API_URL}/create-payment`, {
       amount,
       orderId,
       orderInfo,
-      redirectUrl,
-      ipnUrl,
+      redirectLink,
     }, {
       headers: { Authorization: getToken() },
     });

@@ -58,23 +58,34 @@ const MyRoomPage = () => {
     }
   };
 
+  const getTotalAmount = (c) => {
+    const rent = parseFloat(c.rent_price || '0');
+    const elec = parseFloat(c.total_electricity_price || '0');
+    const water = parseFloat(c.total_water_price || '0');
+    const service = parseFloat(c.total_service_price || '0');
+    return rent + elec + water + service;
+  };
+
   const handlePayment = async (contract) => {
-    const { contract_id, rent_price } = contract;
-    // Gọi API tạo thanh toán
+    if(!contract.end_date){
+      alert("Chủ thuê chưa cập nhật số điện của bạn vui lòng chờ đợi!")
+      return
+    }
     try {
+      const totalAmount = Math.floor(getTotalAmount(contract));
       const paymentData = await createPayment(
-        parseInt(rent_price), 
-        contract_id, 
-        `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`
+        totalAmount,
+        contract.contract_id,
+        `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
+        'http://localhost:3000/my-room'
       );
 
-      // Chuyển hướng đến link thanh toán
       if (paymentData && paymentData.payUrl) {
         window.location.href = paymentData.payUrl;
       } else {
         alert('Không thể lấy URL thanh toán');
       }
-    } catch (error) {
+    } catch {
       alert('Lỗi khi tạo thanh toán');
     }
   };
@@ -96,7 +107,7 @@ const MyRoomPage = () => {
             <div className="myroom-header" onClick={() => toggle(roomId)}>
               <div className="myroom-header-info">
                 <img
-                  src={'https://ho-ng-b-i-1.paiza-user-free.cloud:5000'+room.image_url}
+                  src={'https://ho-ng-b-i-1.paiza-user-free.cloud:5000' + room.image_url}
                   alt={`Phòng ${room?.room_number}`}
                   className="myroom-img"
                 />
@@ -115,7 +126,9 @@ const MyRoomPage = () => {
                     : alert('Phải thanh toán hợp đồng trước khi trả phòng');
                 }}
               >
-                {leavingContractId === roomContracts.find(c => c.payment_status === 'Paid')?.contract_id ? 'Đang xử lý...' : 'Trả phòng'}
+                {leavingContractId === roomContracts.find(c => c.payment_status === 'Paid')?.contract_id
+                  ? 'Đang xử lý...'
+                  : 'Trả phòng'}
               </button>
             </div>
             {expanded && (
@@ -126,20 +139,27 @@ const MyRoomPage = () => {
                     <th>Thời gian</th>
                     <th>Trạng thái</th>
                     <th>Thanh toán</th>
-                    <th>Giá thuê</th>
-                    <th>Chức năng</th> {/* Thêm cột Chức năng */}
+                    <th>Tiền phòng</th>
+                    <th>Điện</th>
+                    <th>Nước</th>
+                    <th>Dịch vụ</th>
+                    <th><strong>Tổng</strong></th>
+                    <th>Chức năng</th>
                   </tr>
                 </thead>
                 <tbody>
                   {roomContracts.map(c => (
                     <tr key={c.contract_id}>
                       <td>{c.contract_id}</td>
-                      <td> {new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
+                      <td>{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
                       <td>{c.status}</td>
                       <td>{c.payment_status}</td>
-                      <td>{Number(c.rent_price)?.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</td>
+                      <td>{parseFloat(c.rent_price).toLocaleString('vi-VN')}₫</td>
+                      <td>{parseFloat(c.total_electricity_price).toLocaleString('vi-VN')}₫</td>
+                      <td>{parseFloat(c.total_water_price).toLocaleString('vi-VN')}₫</td>
+                      <td>{parseFloat(c.total_service_price).toLocaleString('vi-VN')}₫</td>
+                      <td><strong>{getTotalAmount(c).toLocaleString('vi-VN')}₫</strong></td>
                       <td>
-                        {/* Thêm nút Tạo thanh toán cho hợp đồng chưa thanh toán */}
                         {c.payment_status === 'Unpaid' && (
                           <button
                             className="payment-btn"

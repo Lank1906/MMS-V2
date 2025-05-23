@@ -90,7 +90,7 @@ exports.leaveRoom = (req, res) => {
       if (err2) return res.status(500).json({ error: 'Lỗi server khi cập nhật hợp đồng' });
 
       // Cập nhật trạng thái phòng về "Available"
-      renterModel.updateRoomStatus(contract.room_id, 'Available', (err3) => {
+      renterModel.updateRoomStatus(contract.room_id, 'Under Maintenance', (err3) => {
         if (err3) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
         
         res.json({ message: 'Trả phòng thành công' });
@@ -122,7 +122,7 @@ exports.updateProfile = (req, res) => {
 };
 
 exports.createPayment = async (req, res) => {
-    const { amount, orderId, orderInfo } = req.body;
+    const { amount, orderId, orderInfo, redirectLink } = req.body;
 
     var accessKey = 'F8BBA842ECF85';
     var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
@@ -131,12 +131,12 @@ exports.createPayment = async (req, res) => {
     var ipnUrl = 'https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b';
     var requestType = "payWithMethod";
     var requestId = orderId+"LANK" + new Date().getTime();
-    var extraData ='';
     var orderGroupId ='';
     var autoCapture =true;
     var lang = 'vi';
     var id=orderId+"LANK" +  new Date().getTime();
     
+    const extraData = encodeURIComponent(JSON.stringify({ redirectLink }));
 
     //before sign HMAC SHA256 with format
     //accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
@@ -197,7 +197,20 @@ exports.createPayment = async (req, res) => {
 };
 
 exports.redirectPayment=(req, res) => {
-  const { orderId, resultCode, message, amount, transId } = req.query;
+  const { orderId, resultCode, message, amount, transId, extraData } = req.query;
+  
+  let redirectClientUrl = 'http://localhost:3000/my-room';
+  
+   try {
+    if (extraData) {
+      const decoded = JSON.parse(decodeURIComponent(extraData));
+      if (decoded.redirectLink) {
+        redirectClientUrl = decoded.redirectLink;
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi giải mã extraData:', err);
+  }
 
   // Kiểm tra kết quả trả về từ MoMo
   if (resultCode === '0') {
@@ -210,7 +223,7 @@ exports.redirectPayment=(req, res) => {
       payment_amount: amount,  // Số tiền thanh toán
       message: message,
     }).then(() => {
-      res.redirect('http://localhost:3000/my-room');
+      res.redirect(redirectClientUrl);
     }).catch((err) => {
       console.error('Lỗi khi cập nhật trạng thái thanh toán trong DB:', err);
       res.status(500).send('Lỗi server khi cập nhật thông tin thanh toán.');

@@ -148,11 +148,11 @@ exports.updateContractPaymentStatus = (orderId, updateData) => {
     const { payment_status, payment_amount, message } = updateData;
     const sql = `
       UPDATE Contracts 
-      SET payment_status = ?, payment_method = ?
+      SET payment_status = ?, payment_method = ?,payment_date=?
       WHERE contract_id = ? AND is_active = TRUE
     `;
     
-    db.query(sql, [payment_status, 'Bank Transfer',  orderId.split('LANK')[0]], (err, result) => {
+    db.query(sql, [payment_status, 'Bank Transfer',new Date(),  orderId.split('LANK')[0]], (err, result) => {
       if (err) return reject(err);
       resolve(result);
     });

@@ -63,7 +63,7 @@ export default function DashboardScreen() {
         <Text style={styles.title}>Phòng {item.room_number}</Text>
         <Text>📍 {item.property_address}</Text>
         <Text>🏷️ {item.room_type_name}</Text>
-        <Text style={styles.price}>{item.rent_price.toLocaleString()} VNĐ/tháng</Text>
+        <Text style={styles.price}>{Number(item.rent_price).toLocaleString('vi-VN')} VNĐ/tháng</Text>
       </View>
     </TouchableOpacity>
   );
