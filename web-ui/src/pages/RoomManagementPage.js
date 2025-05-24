@@ -48,7 +48,6 @@ const RoomManagementPage = () => {
         },
       });
       setRooms(res.data.rooms);
-      console.log(res.data.rooms)
       setTotal(res.data.total);
     } catch {
       alert('Lỗi tải dữ liệu phòng');

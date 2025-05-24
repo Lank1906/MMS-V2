@@ -41,29 +41,57 @@ exports.rentRoom = (req, res) => {
   const userId = req.user.user_id;
   const { room_id, rent_price } = req.body;
 
-  // Lấy danh sách các hợp đồng chưa thanh toán của user
+  if (!room_id || !rent_price) {
+    return res.status(400).json({ error: 'room_id và rent_price là bắt buộc' });
+  }
+
+  // 1. Lấy các hợp đồng chưa thanh toán
   renterModel.getContractsByUserAndPaymentStatus(userId, 'Unpaid', (err, unpaidContracts) => {
-    if (err) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng chưa thanh toán' });
+    if (err) {
+      console.error('Lỗi khi lấy hợp đồng chưa thanh toán:', err);
+      return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng chưa thanh toán' });
+    }
 
     if (unpaidContracts.length >= 3) {
       return res.status(400).json({ error: 'Bạn có 3 hợp đồng chưa thanh toán. Vui lòng thanh toán trước khi thuê phòng mới.' });
     }
 
-    // Kiểm tra xem người dùng có hợp đồng đang hoạt động hay không (bất kỳ trạng thái)
+    // 2. Kiểm tra hợp đồng đang hoạt động
     renterModel.getActiveContractsByUser(userId, (err2, activeContracts) => {
-      if (err2) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng đang hoạt động' });
+      if (err2) {
+        console.error('Lỗi khi lấy hợp đồng đang hoạt động:', err2);
+        return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng đang hoạt động' });
+      }
 
       const start_date = new Date().toISOString().split('T')[0];
 
-      // Tạo hợp đồng mới
+      // 3. Tạo hợp đồng mới
       renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price }, (err3, result) => {
-        if (err3) return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
+        if (err3) {
+          console.error('Lỗi khi tạo hợp đồng:', err3);
+          return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
+        }
 
-        // Cập nhật trạng thái phòng thành "Rented"
+        // 4. Cập nhật trạng thái phòng
         renterModel.updateRoomStatus(room_id, 'Rented', (err4) => {
-          if (err4) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
+          if (err4) {
+            console.error('Lỗi khi cập nhật trạng thái phòng:', err4);
+            return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
+          }
 
-          res.status(201).json({ message: 'Thuê phòng thành công', contractId: result.insertId });
+          // 5. Thêm vào Room_Renters
+          const join_date = start_date;
+          renterModel.addRenterToRoom({ room_id, renter_id: userId, join_date }, (err5) => {
+            if (err5) {
+              console.error('Lỗi khi thêm người thuê vào phòng:', err5);
+              return res.status(500).json({ error: 'Lỗi khi thêm người thuê vào phòng' });
+            }
+
+            return res.status(201).json({
+              message: 'Thuê phòng thành công',
+              contractId: result.insertId
+            });
+          });
         });
       });
     });

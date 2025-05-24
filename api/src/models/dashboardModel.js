@@ -149,14 +149,16 @@ exports.getLandlordDashboardData = async (landlordId) => {
   `, [landlordId]);
 
   const [utilitySum] = await db.promise().query(`
-    SELECT 
-      SUM(r.current_electricity_usage * rt.electricity_price) AS totalElectricity,
-      SUM(r.current_water_usage * rt.water_price) AS totalWater
-    FROM Rooms r
-    JOIN RoomTypes rt ON r.room_type_id = rt.room_type_id
-    JOIN Properties p ON r.property_id = p.property_id
-    WHERE p.landlord_id = ?
-  `, [landlordId]);
+  SELECT 
+    SUM(c.total_electricity_price) AS totalElectricity,
+    SUM(c.total_water_price) AS totalWater
+  FROM Contracts c
+  JOIN Rooms r ON c.room_id = r.room_id
+  JOIN Properties p ON r.property_id = p.property_id
+  WHERE p.landlord_id = ?
+    AND MONTH(c.payment_date) = MONTH(CURRENT_DATE())
+    AND YEAR(c.payment_date) = YEAR(CURRENT_DATE())
+`, [landlordId]);
 
   const [monthlyRevenue] = await db.promise().query(`
     SELECT 
@@ -174,7 +176,7 @@ exports.getLandlordDashboardData = async (landlordId) => {
   const totalRooms = rooms.length;
   const rentedRooms = rooms.filter(r => r.status === 'Rented').length;
   const availableRooms = totalRooms - rentedRooms;
-
+    console.log(utilitySum)
   return {
     rentedRooms,
     availableRooms,

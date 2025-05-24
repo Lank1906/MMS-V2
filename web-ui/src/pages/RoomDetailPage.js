@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getContracts, createContract, deleteContract } from '../services/contractService';
+import { getContracts, createContract, updateContract, deleteContract } from '../services/contractService';
 import { getRoomServices, createRoomService, deleteRoomService } from '../services/roomServiceService';
 import { getRoomById } from '../services/roomService';
 import { getServices } from '../services/serviceService';
@@ -15,6 +15,7 @@ const RoomDetailPage = () => {
     const [roomRenters, setRoomRenters] = useState([]);
 
     const [showContractModal, setShowContractModal] = useState(false);
+    const [contractId, setContractId] = useState(0);
     const [newContract, setNewContract] = useState({
         start_date: '',
         end_date: '',
@@ -48,7 +49,7 @@ const RoomDetailPage = () => {
             const servicesData = await getRoomServices(roomId);
             setServices(servicesData);
             const allSvcData = await getServices(1, 100);
-            setAllServices(allSvcData);
+            setAllServices(allSvcData.data);
             const rentersData = await getRoomRentersByRoomId(roomId);
             setRoomRenters(rentersData);
         } catch {
@@ -85,15 +86,49 @@ const RoomDetailPage = () => {
         setNewContract(prev => ({ ...prev, total_service_price: totalService }));
     }, [services]);
 
-    const handleAddContract = async (e) => {
+    const handleEditContract = (contract) => {
+        setContractId(contract.contract_id);
+        setNewContract({
+            start_date: contract.start_date?.slice(0, 10) || '',
+            end_date: contract.end_date?.slice(0, 10) || '',
+            rent_price: contract.rent_price || 0,
+            status: contract.status || '',
+            old_water_usage: room.current_water_usage || 0,
+            new_water_usage: contract.new_water_usage || '',
+            total_water_price: contract.total_water_price || 0,
+            old_electricity_usage: room.current_electricity_usage || 0,
+            new_electricity_usage: contract.new_electricity_usage || '',
+            total_electricity_price: contract.total_electricity_price || 0,
+            total_service_price: services.reduce((sum, svc) => sum + (Number(svc.service_price) || 0), 0) || 0
+        });
+        setShowContractModal(true);
+    };
+
+    const handleSaveContract = async (e) => {
         e.preventDefault();
-        const { start_date, rent_price, status } = newContract;
-        if (!start_date || !rent_price || !status) {
+        const { start_date, rent_price, status, end_date } = newContract;
+        if (!start_date || !rent_price || !status ||!end_date) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
         }
+
         try {
-            await createContract({ ...newContract, room_id: parseInt(roomId) });
+            if (contractId != 0) {
+                await updateContract(contractId, {
+                    ...newContract,
+                    room_id: parseInt(roomId)
+                });
+                alert('Cập nhật hợp đồng thành công');
+            } else {
+                await createContract({
+                    ...newContract,
+                    room_id: parseInt(roomId)
+                });
+                alert('Thêm hợp đồng thành công');
+            }
+
+            setShowContractModal(false);
+            setContractId(0);
             setNewContract({
                 start_date: '',
                 end_date: '',
@@ -107,10 +142,9 @@ const RoomDetailPage = () => {
                 total_electricity_price: 0,
                 total_service_price: 0,
             });
-            setShowContractModal(false);
             fetchAll();
         } catch {
-            alert('Lỗi khi thêm hợp đồng');
+            alert(contractId ? 'Lỗi khi cập nhật hợp đồng' : 'Lỗi khi thêm hợp đồng');
         }
     };
 
@@ -262,7 +296,7 @@ const RoomDetailPage = () => {
                                 >
                                     <div>
                                         <div><b>{service.service_name}</b></div>
-                                        <div>Giá: {service.service_price?.toLocaleString('vi-VN')} đ</div>
+                                        <div>Giá: {Number(service.service_price)?.toLocaleString('vi-VN')} đ</div>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteService(service.service_id)}
@@ -333,7 +367,11 @@ const RoomDetailPage = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <h2 style={{ margin: 0, color: '#333' }}>Hợp đồng phòng</h2>
                         <button
-                            onClick={() => setShowContractModal(true)}
+                            onClick={() => {
+                                setContractId(0);
+                                setShowContractModal(true);
+                                setNewContract(prev => ({ ...prev, total_service_price: services.reduce((sum, svc) => sum + (Number(svc.service_price) || 0), 0) || 0 }));
+                            }}
                             style={{
                                 background: '#3f51b5',
                                 color: 'white',
@@ -358,15 +396,15 @@ const RoomDetailPage = () => {
                                 <th style={{ padding: 12 }}>Tiền dịch vụ</th>
                                 <th style={{ padding: 12 }}>Trạng thái</th>
                                 <th style={{ padding: 12 }}>Phương thức</th>
-                                <th style={{ padding: 12 }}>Trang thái thanh toán</th>
-                                <th style={{ padding: 12 }}>Ngày</th>
+                                <th style={{ padding: 12 }}>Trạng thái thanh toán</th>
+                                <th style={{ padding: 12 }}>Ngày thanh toán</th>
                                 <th style={{ padding: 12 }}>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             {contracts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
+                                    <td colSpan="11" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
                                 </tr>
                             ) : (
                                 contracts.map(contract => (
@@ -378,15 +416,19 @@ const RoomDetailPage = () => {
                                         <td style={{ padding: 12 }}>{Number(contract.total_electricity_price)?.toLocaleString('vi-VN') || 0} đ</td>
                                         <td style={{ padding: 12 }}>{Number(contract.total_service_price)?.toLocaleString('vi-VN') || 0} đ</td>
                                         <td style={{ padding: 12 }}>{contract.status}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_method}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_status}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_date}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_method || '-'}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_status || '-'}</td>
+                                        <td style={{ padding: 12 }}>{contract.payment_date ? new Date(contract.payment_date).toLocaleDateString() : '-'}</td>
                                         <td style={{ padding: 12 }}>
                                             <button
+                                                onClick={() => handleEditContract(contract)}
+                                                style={{ background: '#1976d2', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 6 }}>
+                                                Sửa
+                                            </button>
+                                            <button
                                                 onClick={() => handleDeleteContract(contract.contract_id)}
-                                                style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                                            >
-                                                Xóa
+                                                style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                                                Xoá
                                             </button>
                                         </td>
                                     </tr>
@@ -418,8 +460,8 @@ const RoomDetailPage = () => {
                         >
                             ×
                         </button>
-                        <h3>Thêm hợp đồng mới</h3>
-                        <form onSubmit={handleAddContract} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+                        <h3>{contractId ? 'Cập nhật hợp đồng' : 'Thêm hợp đồng mới'}</h3>
+                        <form onSubmit={handleSaveContract} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
                             <label>
                                 Ngày bắt đầu <span style={{ color: 'red' }}>*</span>
                                 <input
@@ -529,6 +571,7 @@ const RoomDetailPage = () => {
                                     <option value="Terminated">Terminated</option>
                                 </select>
                             </label>
+
                             <button type="submit" style={{
                                 backgroundColor: '#3f51b5',
                                 color: 'white',
@@ -539,7 +582,7 @@ const RoomDetailPage = () => {
                                 cursor: 'pointer',
                                 fontSize: 16
                             }}>
-                                Lưu
+                                {contractId ? 'Cập nhật' : 'Lưu'}
                             </button>
                         </form>
                     </div>

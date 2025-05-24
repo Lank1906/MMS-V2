@@ -27,6 +27,7 @@ export const getContractById = async (id) => {
 
 // Tạo hợp đồng mới
 export const createContract = async (data) => {
+  console.log(data)
   const res = await axios.post(API_URL, data, {
     headers: { Authorization: getToken() }
   });

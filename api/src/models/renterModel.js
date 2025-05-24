@@ -81,9 +81,17 @@ exports.createContract = (contractData, callback) => {
   });
 };
 
+exports.addRenterToRoom = ({ room_id, renter_id, join_date }, callback) => {
+  const sql = `
+    INSERT INTO Room_Renters (room_id, renter_id, join_date, status)
+    VALUES (?, ?, ?, 'Active')
+  `;
+  db.query(sql, [room_id, renter_id, join_date], callback);
+};
+
 // Cập nhật trạng thái phòng khi người dùng trả phòng
 exports.updateRoomStatus = (roomId, status, callback) => {
-  const sql = `UPDATE Rooms SET status = ? WHERE room_id = ? AND is_active = TRUE`;
+  const sql = `UPDATE Rooms SET status = ?, current_occupants=1 WHERE room_id = ? AND is_active = TRUE`;
   db.query(sql, [status, roomId], (err, result) => {
     if (err) return callback(err);
     callback(null, result);
