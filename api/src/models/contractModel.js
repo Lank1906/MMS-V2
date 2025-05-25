@@ -36,6 +36,19 @@ exports.createContract = (data, callback) => {
     INSERT INTO Contracts (room_id, renter_id, start_date, end_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, is_active)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
   `;
+  const sql2=`
+  UPDATE Rooms r
+    SET r.current_electricity_usage=?,r.current_water_usage=?
+    WHERE r.room_id = ? AND r.is_active = TRUE
+    `;
+  
+  db.query(sql2,[
+      data.new_electricity_usage,
+      data.new_water_usage,
+      data.room_id
+      ], (err, result) => {
+    
+  });
   db.query(sql, [
     data.room_id,
     data.renter_id,
@@ -58,6 +71,18 @@ exports.updateContract = (id, data, callback) => {
     SET start_date = ?, end_date = ?, rent_price = ?, total_water_price = ?, total_electricity_price = ?, total_service_price = ?, status = ?
     WHERE contract_id = ? AND is_active = TRUE
   `;
+  const sql2=`
+  UPDATE Rooms r
+    SET r.current_electricity_usage=?,r.current_water_usage=?
+    WHERE r.room_id = ? AND r.is_active = TRUE
+    `;
+    db.query(sql2,[
+      data.new_electricity_usage,
+      data.new_water_usage,
+      data.room_id
+      ], (err, result) => {
+    
+  });
   db.query(sql, [
     data.start_date,
     data.end_date,
@@ -71,6 +96,7 @@ exports.updateContract = (id, data, callback) => {
     if (err) return callback(err);
     callback(null, result);
   });
+  
 };
 
 exports.deleteContract = (id, callback) => {
