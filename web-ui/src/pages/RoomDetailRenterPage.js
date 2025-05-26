@@ -46,7 +46,7 @@ const RoomDetailRenterPage = () => {
       <div className="room-card">
         <img
           className="room-image"
-          src={room.image_url || 'https://via.placeholder.com/500x300?text=No+Image'}
+          src={"https://ho-ng-b-i-1.paiza-user-free.cloud:5000"+room.image_url || 'https://via.placeholder.com/500x300?text=No+Image'}
           alt="Phòng"
         />
         <div className="room-content">
