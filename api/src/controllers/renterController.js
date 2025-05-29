@@ -73,7 +73,7 @@ exports.rentRoom = (req, res) => {
         }
 
         // 4. Cập nhật trạng thái phòng
-        renterModel.updateRoomStatus(room_id, 'Rented', (err4) => {
+        renterModel.updateRoomStatus(room_id,0, 'Rented', (err4) => {
           if (err4) {
             console.error('Lỗi khi cập nhật trạng thái phòng:', err4);
             return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
@@ -118,7 +118,7 @@ exports.leaveRoom = (req, res) => {
       if (err2) return res.status(500).json({ error: 'Lỗi server khi cập nhật hợp đồng' });
 
       // Cập nhật trạng thái phòng về "Available"
-      renterModel.updateRoomStatus(contract.room_id, 'Under Maintenance', (err3) => {
+      renterModel.updateRoomStatus(contract.room_id,userId, 'Under Maintenance', (err3) => {
         if (err3) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
         
         res.json({ message: 'Trả phòng thành công' });
@@ -272,4 +272,32 @@ exports.redirectPayment=(req, res) => {
       res.status(500).send('Lỗi server khi cập nhật thông tin thanh toán thất bại.');
     });
   }
+};
+
+exports.cancelContract = (req, res) => {
+  const userId = req.user.user_id;
+  const contractId = parseInt(req.params.contractId);
+
+  // Đảm bảo người dùng chỉ hủy được hợp đồng của chính họ
+  renterModel.getActiveContractsByUser(userId, (err, contracts) => {
+    if (err) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng.' });
+
+    const contract = contracts.find(c => c.contract_id === contractId);
+    if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng của bạn hoặc hợp đồng đã bị hủy.' });
+
+    // Tiến hành hủy hợp đồng
+    renterModel.cancelContract(contractId, (err2, result) => {
+      if (err2) return res.status(400).json({ error: err2.message || 'Không thể hủy hợp đồng.' });
+
+      // Cập nhật trạng thái phòng về Available
+      renterModel.updateRoomStatus(contract.room_id,userId, 'Available', (err3) => {
+        if (err3) {
+          console.error('Lỗi khi cập nhật trạng thái phòng:', err3);
+          return res.status(500).json({ error: 'Đã hủy hợp đồng nhưng không thể cập nhật trạng thái phòng.' });
+        }
+
+        res.status(200).json({ message: 'Hủy hợp đồng phòng thành công.' });
+      });
+    });
+  });
 };

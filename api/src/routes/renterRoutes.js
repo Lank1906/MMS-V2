@@ -9,6 +9,7 @@ router.get('/rooms/:roomId', renterController.getRoomDetail);
 router.get('/contracts/active', renterController.getActiveContracts);
 router.post('/contracts/rent', renterController.rentRoom);
 router.put('/contracts/leave/:contractId', renterController.leaveRoom);
+router.put('/contracts/:contractId/cancel', renterController.cancelContract);
 router.get('/profile', renterController.getProfile);
 router.put('/profile', renterController.updateProfile);
 router.post('/create-payment',renterController.createPayment);

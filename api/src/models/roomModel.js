@@ -26,8 +26,8 @@ exports.getRooms = (landlordId, filters, callback) => {
   }
 
   if (search) {
-    sql += ' AND r.room_number LIKE ?';
-    params.push(`%${search}%`);
+    sql += ' AND (r.room_number LIKE ? OR rt.name LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
   }
 
   if (priceMin) {
@@ -67,8 +67,8 @@ exports.getRooms = (landlordId, filters, callback) => {
     }
 
     if (search) {
-      countSql += ' AND r.room_number LIKE ?';
-      countParams.push(`%${search}%`);
+      sql += ' AND (r.room_number LIKE ? OR rt.name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
     }
 
     if (priceMin) {
@@ -119,7 +119,7 @@ exports.createRoom = (landlordId, data, callback) => {
   // Bạn nên kiểm tra property_id thuộc landlordId ở controller trước khi gọi hàm này
   db.query(
     sql,
-    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status,data.image_url,data.current_electricity_usage,data.current_water_usage],
+    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status, data.image_url, data.current_electricity_usage, data.current_water_usage],
     (err, result) => {
       if (err) return callback(err);
       callback(null, result);
@@ -138,7 +138,7 @@ exports.updateRoom = (roomId, landlordId, data, callback) => {
 
   db.query(
     sql,
-    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status,data.image_url,data.current_electricity_usage,data.current_water_usage, roomId, landlordId],
+    [data.property_id, data.room_type_id, data.room_number, data.max_occupants, data.status, data.image_url, data.current_electricity_usage, data.current_water_usage, roomId, landlordId],
     (err, result) => {
       if (err) return callback(err);
       callback(null, result);

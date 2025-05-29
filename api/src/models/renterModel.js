@@ -90,11 +90,18 @@ exports.addRenterToRoom = ({ room_id, renter_id, join_date }, callback) => {
 };
 
 // Cập nhật trạng thái phòng khi người dùng trả phòng
-exports.updateRoomStatus = (roomId, status, callback) => {
-  const sql = `UPDATE Rooms SET status = ?, current_occupants=1 WHERE room_id = ? AND is_active = TRUE`;
+exports.updateRoomStatus = (roomId,renterId, status, callback) => {
+  const sql = `UPDATE Rooms SET status = ?, current_occupants = ${renterId==0?1:0} WHERE room_id = ? AND is_active = TRUE`;
+
   db.query(sql, [status, roomId], (err, result) => {
     if (err) return callback(err);
-    callback(null, result);
+
+    // Xoá người thuê còn active khỏi bảng Room_Renters
+    const deleteSql = `DELETE FROM Room_Renters WHERE room_id = ? AND renter_id=? AND status = 'Active'`;
+    db.query(deleteSql, [roomId,renterId], (err2, result2) => {
+      if (err2) return callback(err2);
+      callback(null, result);
+    });
   });
 };
 
@@ -173,4 +180,17 @@ exports.getContractsByUserAndPaymentStatus = (userId, paymentStatus, callback) =
     WHERE renter_id = ? AND payment_status = ? AND is_active = TRUE
   `;
   db.query(sql, [userId, paymentStatus], callback);
+};
+
+exports.cancelContract = (contractId, callback) => {
+  const sql = `
+    UPDATE Contracts
+    SET status = 'Terminated', is_active = FALSE
+    WHERE contract_id = ? AND status = 'Active' AND is_active = TRUE
+  `;
+  db.query(sql, [contractId], (err, result) => {
+    if (err) return callback(err);
+    if (result.affectedRows === 0) return callback(new Error('Hợp đồng không tồn tại hoặc không thể hủy.'));
+    callback(null, { message: 'Hợp đồng đã được hủy thành công.' });
+  });
 };
