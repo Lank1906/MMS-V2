@@ -1,0 +1,39 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+
+# Các tệp log của hệ thống
+*.log
+
+# Các thư mục tạm thời
+/.env
+/.env.local
+/.env.*.local
+
+# Thư mục build của ReactJS (web-ui)
+/web-ui/build/
+
+# Thư mục build của React Native (mobile-ui)
+/mobile-ui/android/build/
+/mobile-ui/ios/build/
+.mobile-ui/*.xcodeproj/
+
+# Thư mục của editor hoặc IDE (Visual Studio Code, WebStorm, etc.)
+.vscode/
+/.idea/
+/*.sublime-workspace
+/*.sublime-project
+
+# Thư mục của các tệp môi trường local của hệ điều hành (macOS, Windows)
+.DS_Store
+Thumbs.db
+
+# Các tệp của hệ thống
+*.swp
+*.swo
+
+# Tệp cấu hình của các IDE hoặc các công cụ phát triển
+*.iml
