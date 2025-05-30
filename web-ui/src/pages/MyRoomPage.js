@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getActiveContracts, leaveRoom, getRoomById, createPayment } from '../services/renterService';
+import { getActiveContracts, leaveRoom, getRoomById, createPayment, cancelContract } from '../services/renterService';
 import '../assets/MyRoomPage.css';
 
 const MyRoomPage = () => {
@@ -67,7 +67,7 @@ const MyRoomPage = () => {
   };
 
   const handlePayment = async (contract) => {
-    if(!contract.end_date){
+    if (!contract.end_date) {
       alert("Chủ thuê chưa cập nhật số điện của bạn vui lòng chờ đợi!")
       return
     }
@@ -87,6 +87,26 @@ const MyRoomPage = () => {
       }
     } catch {
       alert('Lỗi khi tạo thanh toán');
+    }
+  };
+
+  const handleCancel = async (contract) => {
+    const start = new Date(contract.start_date);
+    const today = new Date();
+    const diffInDays = Math.ceil((start.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) / 86400000);
+    if (diffInDays < 0 || diffInDays > 3) {
+      alert('Bạn chỉ có thể hủy hợp đồng trong vòng 3 ngày sau khi hợp đồng bắt đầu.');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy hợp đồng ${contract.contract_id}?`)) return;
+
+    try {
+      await cancelContract(contract.contract_id);
+      alert('Hủy hợp đồng thành công!');
+      setContracts(prev => prev.filter(c => c.contract_id !== contract.contract_id));
+    } catch {
+      alert('Lỗi khi hủy hợp đồng.');
     }
   };
 
@@ -161,12 +181,19 @@ const MyRoomPage = () => {
                       <td><strong>{getTotalAmount(c).toLocaleString('vi-VN')}₫</strong></td>
                       <td>
                         {c.payment_status === 'Unpaid' && (
-                          <button
-                            className="payment-btn"
-                            onClick={() => handlePayment(c)}
-                          >
-                            Tạo thanh toán
-                          </button>
+                          <>
+                            <button className="payment-btn" onClick={() => handlePayment(c)}>
+                              Tạo thanh toán
+                            </button>
+                            <br />
+                            <button
+                              className="cancel-btn payment-btn"
+                              style={{ backgroundColor: '#f44336', color: 'white' }}
+                              onClick={() => handleCancel(c)}
+                            >
+                              Hủy hợp đồng
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>

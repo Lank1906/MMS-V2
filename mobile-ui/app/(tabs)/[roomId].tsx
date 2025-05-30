@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { getRoomById, rentRoom } from '../../services/api';
+import { RefreshControl } from 'react-native';
 
 type Room = {
   room_id: number;
@@ -32,20 +33,25 @@ export default function RoomDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isRented, setIsRented] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadRoom = async () => {
+  try {
+    setLoading(true);
+    const data = await getRoomById(roomId as string);
+    setRoom(data);
+  } catch {
+    setError('Lấy thông tin phòng thất bại.');
+  } finally {
+    setLoading(false);
+    setRefreshing(false); // <-- reset sau khi refresh
+  }
+};
+
 
   useEffect(() => {
-    const loadRoom = async () => {
-      try {
-        setLoading(true);
-        const data = await getRoomById(roomId as string);
-        setRoom(data);
-      } catch {
-        setError('Lấy thông tin phòng thất bại.');
-      } finally {
-        setLoading(false);
-      }
-    };
     if (roomId) loadRoom();
+    setIsRented(false)
   }, [roomId]);
 
   const handleRent = async () => {
@@ -64,7 +70,15 @@ export default function RoomDetailScreen() {
   if (!room) return <Text style={styles.error}>Không tìm thấy phòng.</Text>;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => {
+          setRefreshing(true);
+          loadRoom();
+        }} />
+      }
+    >
       <Text style={styles.heading}>Chi tiết phòng</Text>
 
       <Image

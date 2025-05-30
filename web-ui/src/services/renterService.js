@@ -120,6 +120,19 @@ export const createPayment = async (amount, orderId, orderInfo, redirectLink) =>
   }
 };
 
+// Hủy hợp đồng
+export const cancelContract = async (contractId) => {
+  try {
+    const res = await axios.put(`${API_URL}/contracts/${contractId}/cancel`, null, {
+      headers: { Authorization: getToken() },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error cancelling contract:', error);
+    throw error;
+  }
+};
+
 export default {
   getAvailableRooms,
   getRoomById,
@@ -128,5 +141,6 @@ export default {
   leaveRoom,
   getProfile,
   updateProfile,
-  createPayment
+  createPayment,
+  cancelContract
 };

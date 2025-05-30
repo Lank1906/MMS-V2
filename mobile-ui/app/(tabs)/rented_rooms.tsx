@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   getActiveContracts, getRoomById,
-  leaveRoom, createPayment
+  leaveRoom, createPayment, cancelContract
 } from '../../services/api';
 
 interface Contract {
@@ -35,6 +35,13 @@ export default function RentedRoomsScreen(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [processingContractId, setProcessingContractId] = useState<number | null>(null);
+
+  const canCancelContract = (startDate: string): boolean => {
+    const today = new Date();
+    const start = new Date(startDate);
+    const diff = (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 3;
+  };
 
   const reloadContracts = useCallback(async () => {
     try {
@@ -100,7 +107,7 @@ export default function RentedRoomsScreen(): JSX.Element {
   };
 
   const handlePayment = async (contract: Contract, room: Room): Promise<void> => {
-    if(!contract.end_date){
+    if (!contract.end_date) {
       Alert.alert('Thông báo', 'Chủ thuê chưa cập nhật số điện của bạn vui lòng chờ đợi!');
       return
     }
@@ -119,6 +126,32 @@ export default function RentedRoomsScreen(): JSX.Element {
     } catch {
       Alert.alert('Lỗi', 'Không thể tạo thanh toán');
     }
+  };
+
+  const handleCancelContract = async (contract: Contract): Promise<void> => {
+    if (!canCancelContract(contract.start_date)) {
+      Alert.alert('Không thể huỷ', 'Chỉ được huỷ hợp đồng trước 3 ngày kể từ ngày bắt đầu.');
+      return;
+    }
+
+    Alert.alert('Xác nhận huỷ', 'Bạn chắc chắn muốn huỷ hợp đồng này?', [
+      { text: 'Không' },
+      {
+        text: 'Đồng ý',
+        onPress: async () => {
+          try {
+            setProcessingContractId(contract.contract_id);
+            await cancelContract(contract.contract_id.toString());
+            setContracts(prev => prev.filter(c => c.contract_id !== contract.contract_id));
+            Alert.alert('Thành công', 'Hợp đồng đã được huỷ');
+          } catch {
+            Alert.alert('Lỗi', 'Không thể huỷ hợp đồng');
+          } finally {
+            setProcessingContractId(null);
+          }
+        }
+      }
+    ]);
   };
 
   const groupedContracts = contracts.reduce((acc, c) => {
@@ -179,9 +212,18 @@ export default function RentedRoomsScreen(): JSX.Element {
                       Tổng tiền: {getTotalAmount(c).toLocaleString('vi-VN')} VNĐ
                     </Text>
                     {c.payment_status === 'Unpaid' && (
-                      <TouchableOpacity style={styles.btnPay} onPress={() => handlePayment(c, room)}>
-                        <Text style={styles.btnText}>Thanh toán</Text>
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                        <TouchableOpacity style={[styles.btnPay, { flex: 1 }]} onPress={() => handlePayment(c, room)}>
+                          <Text style={styles.btnText}>Thanh toán</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.btnCancel, { flex: 1, backgroundColor: canCancelContract(c.start_date) ? '#e67e22' : '#ccc' }]}
+                          disabled={!canCancelContract(c.start_date)}
+                          onPress={() => handleCancelContract(c)}
+                        >
+                          <Text style={styles.btnText}>Huỷ hợp đồng</Text>
+                        </TouchableOpacity>
+                      </View>
                     )}
                   </View>
                 ))}
@@ -207,4 +249,5 @@ const styles = StyleSheet.create({
   contractBox: { padding: 10, backgroundColor: '#f9f9f9', borderTopWidth: 1, borderColor: '#ddd' },
   contractItem: { marginBottom: 12, padding: 10, backgroundColor: '#fff', borderRadius: 8, elevation: 1 },
   noRoom: { textAlign: 'center', marginTop: 40, color: '#777' },
+  btnCancel: { marginTop: 8,  padding: 8,  borderRadius: 6},
 });

@@ -128,6 +128,14 @@ export const uploadImage = async (file: any) => {
   return res.data;
 };
 
+export const cancelContract = async (contractId: string) => {
+  const token = await getToken();
+  const res = await axios.put(`${RENTER_URL}/contracts/${contractId}/cancel`, null, {
+    headers: { Authorization: token },
+  });
+  return res.data;
+};
+
 export default {
   login,
   register,
@@ -142,4 +150,5 @@ export default {
   updateProfile,
   createPayment,
   uploadImage,
+  cancelContract
 };
