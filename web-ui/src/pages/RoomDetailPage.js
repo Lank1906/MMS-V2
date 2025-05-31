@@ -111,10 +111,6 @@ const RoomDetailPage = () => {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
         }
-        if(old_electricity_usage>new_electricity_usage || old_water_usage>new_water_usage){
-            alert('Số nước và điện không hợp lệ vui lòng nhập lại!')
-            return;
-        }
 
         try {
             if (contractId != 0) {

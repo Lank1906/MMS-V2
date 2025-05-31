@@ -11,7 +11,7 @@ const LoginPage = () => {
     try {
       const response = await login(email, password);
       console.log('Login successful', response);
-      window.location.href = "/";
+      window.location.href = "/#/dashboard";
     } catch (err) {
       setError('Đăng nhập thất bại. Kiểm tra lại thông tin.');
     } finally {

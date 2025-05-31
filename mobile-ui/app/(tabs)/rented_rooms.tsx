@@ -36,11 +36,19 @@ export default function RentedRoomsScreen(): JSX.Element {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [processingContractId, setProcessingContractId] = useState<number | null>(null);
 
-  const canCancelContract = (startDate: string): boolean => {
+  const canCancelContract = (startDateStr: string): boolean => {
+    const startDate = new Date(startDateStr);
     const today = new Date();
-    const start = new Date(startDate);
-    const diff = (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
-    return diff <= 3;
+
+    // Đặt thời gian 0 giờ 0 phút 0 giây để so sánh chỉ dựa trên ngày
+    startDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    // Tính số ngày cách nhau
+    const diffTime =- startDate.getTime() + today.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    // Nếu còn ít nhất 3 ngày mới đến ngày bắt đầu => cho phép huỷ
+    return diffDays < 3;
   };
 
   const reloadContracts = useCallback(async () => {
@@ -249,5 +257,5 @@ const styles = StyleSheet.create({
   contractBox: { padding: 10, backgroundColor: '#f9f9f9', borderTopWidth: 1, borderColor: '#ddd' },
   contractItem: { marginBottom: 12, padding: 10, backgroundColor: '#fff', borderRadius: 8, elevation: 1 },
   noRoom: { textAlign: 'center', marginTop: 40, color: '#777' },
-  btnCancel: { marginTop: 8,  padding: 8,  borderRadius: 6},
+  btnCancel: { marginTop: 8, padding: 8, borderRadius: 6 },
 });
