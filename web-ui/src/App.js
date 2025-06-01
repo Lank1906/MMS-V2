@@ -1,12 +1,10 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import { getCurrentUser } from './services/authService';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PropertyManagementPage from './pages/PropertyManagementPage';
 import RoomManagementPage from './pages/RoomManagementPage';
-import ContractManagementPage from './pages/ContractManagementPage';
 import RoomTypeManagementPage from './pages/RoomTypeManagementPage';
 import ServiceManagementPage from './pages/ServiceManagementPage';
 import AdminUserManagementPage from './pages/AdminManagementPage';
@@ -38,11 +36,11 @@ const App = () => {
             {/* Route sau khi đăng nhập */}
             {currentUser && (
               <>
-                <Route path="/dashboard" element={<DashboardPage />} />
 
                 {/* Admin */}
                 {currentUser.role === 'Admin' && (
                   <>
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/user-management" element={<AdminUserManagementPage />} />
                   </>
                 )}
@@ -50,6 +48,7 @@ const App = () => {
                 {/* Landlord */}
                 {currentUser.role === 'Landlord' && (
                   <>
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/property-management" element={<PropertyManagementPage />} />
                     <Route path="/room-management" element={<RoomManagementPage />} />
                     <Route path="/room-management/:propertyId" element={<RoomManagementPage />} />
@@ -62,7 +61,7 @@ const App = () => {
                 {/* Renter */}
                 {currentUser.role === 'Renter' && (
                   <>
-                    <Route path="/free-rooms" element={<FreeRoomsPage />} />
+                    <Route path="/dashboard" element={<FreeRoomsPage />} />
                     <Route path="/renter-room-detail/:roomId" element={<RoomDetailRenterPage />} />
                     <Route path="/my-room" element={<MyRoomPage />} />
                     <Route path="/profile" element={<ProfilePage />} />

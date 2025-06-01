@@ -41,7 +41,7 @@ const Sidebar = () => {
          {currentUser.role === 'Renter' && (
           <>
             <li>
-              <Link to="/free-rooms" className="menu-item">📊 Dashboard</Link>
+              <Link to="/dashboard" className="menu-item">📊 Dashboard</Link>
             </li>
             <li>
               <Link to="/my-room" className="menu-item">🏡 Phòng đang thuê</Link>
