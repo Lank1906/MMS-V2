@@ -26,14 +26,29 @@ const RoomDetailRenterPage = () => {
 
   const handleRent = async () => {
     try {
-      await renterService.rentRoom({
-        room_id: room.room_id,
-        rent_price: room.rent_price,
-      });
-      alert('Bạn đã thuê phòng thành công!');
-      setIsRented(true);
+      const check = await renterService.checkRentCondition();
+      if (!check.canRent) {
+        return alert(`Không thể thuê phòng: ${check.reason}`);
+      }
+
+      const depositAmount = Math.floor(room.rent_price * 0.3);
+      const confirm = window.confirm(`Bạn cần đặt cọc ${depositAmount.toLocaleString('vi-VN')}₫ để thuê phòng. Tiếp tục?`);
+      if (!confirm) return;
+
+      const paymentData = await renterService.createPayment(
+        depositAmount,
+        `${room.room_id}-${Date.now()}`,
+        `Đặt cọc thuê phòng ${room.room_number}`,
+        'http://localhost:3000/my-room' // hoặc `${window.location.origin}/my-room`
+      );
+
+      if (paymentData?.payUrl) {
+        window.location.href = paymentData.payUrl;
+      } else {
+        alert('Không thể tạo thanh toán.');
+      }
     } catch (err) {
-      alert(err.response?.data?.error || 'Lỗi khi thuê phòng');
+      alert(err.response?.data?.error || 'Lỗi khi xử lý thuê phòng.');
     }
   };
 
@@ -46,7 +61,7 @@ const RoomDetailRenterPage = () => {
       <div className="room-card">
         <img
           className="room-image"
-          src={"https://ho-ng-b-i-1.paiza-user-free.cloud:5000"+room.image_url || 'https://via.placeholder.com/500x300?text=No+Image'}
+          src={"https://ho-ng-b-i-1.paiza-user-free.cloud:5000" + room.image_url || 'https://via.placeholder.com/500x300?text=No+Image'}
           alt="Phòng"
         />
         <div className="room-content">
@@ -61,7 +76,32 @@ const RoomDetailRenterPage = () => {
           <p><strong>Mô tả:</strong> {room.description || 'Không có mô tả.'}</p>
 
           {!isRented && room.status === 'Available' ? (
-            <button className="rent-button" onClick={handleRent}>Thuê phòng này</button>
+            <>
+              <button className="rent-button" onClick={handleRent}>Thuê phòng này</button>
+              <button
+                className="rent-button"
+                style={{ backgroundColor: '#f39c12', marginLeft: '12px' }}
+                onClick={async () => {
+                  try {
+                    const fakeOrderId = `${room.room_id}-${Date.now()}`;
+                    await renterService.mockPayment({
+                      orderId: fakeOrderId,
+                      amount: Math.floor(room.rent_price * 0.3),
+                      type: 'deposit',
+                      room_id: room.room_id,
+                      rent_price: room.rent_price,
+                      redirectLink: `${window.location.origin}/#/my-room`
+                    });
+                    alert('✅ Giả lập thanh toán thành công!');
+                    window.location.href = '/my-room';
+                  } catch (err) {
+                    alert('❌ Mock thất bại: ' + (err.response?.data?.error || err.message));
+                  }
+                }}
+              >
+                🧪 Giả lập thanh toán thành công
+              </button>
+            </>
           ) : (
             <p className="rented-msg">{isRented ? 'Bạn đang thuê phòng này.' : 'Phòng hiện không sẵn sàng.'}</p>
           )}

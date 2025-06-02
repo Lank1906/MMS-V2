@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getActiveContracts, leaveRoom, getRoomById, createPayment, cancelContract } from '../services/renterService';
+import { getActiveContracts, leaveRoom, getRoomById, createPayment, cancelContract,simulatePayment } from '../services/renterService';
 import '../assets/MyRoomPage.css';
 
 const MyRoomPage = () => {
@@ -58,35 +58,43 @@ const MyRoomPage = () => {
     }
   };
 
-  const getTotalAmount = (c) => {
-    const rent = parseFloat(c.rent_price || '0');
-    const elec = parseFloat(c.total_electricity_price || '0');
-    const water = parseFloat(c.total_water_price || '0');
-    const service = parseFloat(c.total_service_price || '0');
-    return rent + elec + water + service;
-  };
+  const getTotalAmount = (contract) =>
+    parseFloat(contract.rent_price) +
+    parseFloat(contract.total_electricity_price) +
+    parseFloat(contract.total_water_price) +
+    parseFloat(contract.total_service_price) -
+    parseFloat(contract.deposit_amount || '0');
 
   const handlePayment = async (contract) => {
     if (!contract.end_date) {
-      alert("Chủ thuê chưa cập nhật số điện của bạn vui lòng chờ đợi!")
-      return
+      alert("Chủ thuê chưa cập nhật số điện của bạn. Vui lòng chờ đợi!");
+      return;
     }
+
     try {
       const totalAmount = Math.floor(getTotalAmount(contract));
+      const deposit = parseFloat(contract.deposit_amount || 0);
+      const remainingAmount = totalAmount - deposit;
+
+      if (remainingAmount <= 0) {
+        alert("Hợp đồng đã được thanh toán đầy đủ hoặc tiền đặt cọc vượt quá số tiền phải trả.");
+        return;
+      }
+
       const paymentData = await createPayment(
-        totalAmount,
+        remainingAmount,
         contract.contract_id,
-        `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
+        `Thanh toán phần còn lại hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
         'http://localhost:3000/my-room'
       );
 
-      if (paymentData && paymentData.payUrl) {
+      if (paymentData?.payUrl) {
         window.location.href = paymentData.payUrl;
       } else {
-        alert('Không thể lấy URL thanh toán');
+        alert('Không thể lấy URL thanh toán.');
       }
     } catch {
-      alert('Lỗi khi tạo thanh toán');
+      alert('Lỗi khi tạo thanh toán.');
     }
   };
 
@@ -99,7 +107,7 @@ const MyRoomPage = () => {
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc chắn muốn hủy hợp đồng ${contract.contract_id}?`)) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy hợp đồng ${contract.contract_id}? Bạn sẽ không thể nhận lại số tiền đã cọc!`)) return;
 
     try {
       await cancelContract(contract.contract_id);
@@ -135,6 +143,9 @@ const MyRoomPage = () => {
                   <div className="myroom-room-number">{room?.room_number || '...'}</div>
                   <div className="myroom-room-address">{room?.property_address || '...'}</div>
                 </div>
+                <div className="myroom-owner">
+                  <span><strong>Chủ nhà:</strong> {room?.landlord_name || 'N/A'} ({room?.landlord_phone || 'N/A'})</span>
+                </div>
               </div>
               <button
                 className="myroom-leave-btn"
@@ -159,6 +170,7 @@ const MyRoomPage = () => {
                     <th>Thời gian</th>
                     <th>Trạng thái</th>
                     <th>Thanh toán</th>
+                    <th>Đã trả</th>
                     <th>Tiền phòng</th>
                     <th>Điện</th>
                     <th>Nước</th>
@@ -174,6 +186,7 @@ const MyRoomPage = () => {
                       <td>{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
                       <td>{c.status}</td>
                       <td>{c.payment_status}</td>
+                      <td>{parseFloat(c.deposit_amount).toLocaleString('vi-VN')} VNĐ</td>
                       <td>{parseFloat(c.rent_price).toLocaleString('vi-VN')}₫</td>
                       <td>{parseFloat(c.total_electricity_price).toLocaleString('vi-VN')}₫</td>
                       <td>{parseFloat(c.total_water_price).toLocaleString('vi-VN')}₫</td>
@@ -192,6 +205,30 @@ const MyRoomPage = () => {
                               onClick={() => handleCancel(c)}
                             >
                               Hủy hợp đồng
+                            </button>
+                            <button
+                              className="simulate-btn payment-btn"
+                              style={{ backgroundColor: '#9c27b0', color: 'white', marginTop: '6px' }}
+                              onClick={async () => {
+                                if (window.confirm('Bạn có chắc muốn giả lập thanh toán cho hợp đồng này?')) {
+                                  try {
+                                    await simulatePayment(c.contract_id);
+                                    alert('Giả lập thanh toán thành công!');
+                                    // Cập nhật lại contracts sau khi giả lập
+                                    setContracts(prev =>
+                                      prev.map(cc =>
+                                        cc.contract_id === c.contract_id
+                                          ? { ...cc, payment_status: 'Paid' }
+                                          : cc
+                                      )
+                                    );
+                                  } catch {
+                                    alert('Lỗi khi giả lập thanh toán!');
+                                  }
+                                }
+                              }}
+                            >
+                              Giả lập thanh toán
                             </button>
                           </>
                         )}

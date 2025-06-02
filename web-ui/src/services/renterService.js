@@ -133,6 +133,73 @@ export const cancelContract = async (contractId) => {
   }
 };
 
+export const checkRentCondition = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/contracts/check-rent`, {
+      headers: { Authorization: getToken() },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error checking rent condition:', error);
+    throw error;
+  }
+};
+
+export const createDepositPayment = async (room_id, rent_price, redirectLink) => {
+  const depositAmount = Math.floor(rent_price * 0.3);
+  const orderId = `${room_id}-${Date.now()}`;
+  const orderInfo = `Đặt cọc thuê phòng ${room_id}`;
+
+  const res = await axios.post(`${API_URL}/create-payment`, {
+    amount: depositAmount,
+    orderId,
+    orderInfo,
+    redirectLink,
+    extraData: {
+      room_id,
+      rent_price,
+      type: 'deposit',
+      redirectLink
+    }
+  }, {
+    headers: { Authorization: getToken() }
+  });
+
+  return res.data; // payUrl
+};
+
+export const mockPayment = async ({ orderId, amount, type, room_id, rent_price, redirectLink }) => {
+  try {
+    const res = await axios.post(`${API_URL}/mock-payment`, {
+      orderId,
+      amount,
+      type,
+      room_id,
+      rent_price,
+      redirectLink
+    }, {
+      headers: { Authorization: getToken() },
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error('Error mocking payment:', error);
+    throw error;
+  }
+};
+
+export const simulatePayment = async (contractId) => {
+  try {
+    const res = await axios.put(`${API_URL}/contracts/${contractId}/simulate-payment`, null, {
+      headers: { Authorization: getToken() }
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error simulating payment:', error);
+    throw error;
+  }
+};
+
 export default {
   getAvailableRooms,
   getRoomById,
@@ -142,5 +209,9 @@ export default {
   getProfile,
   updateProfile,
   createPayment,
-  cancelContract
+  cancelContract,
+  checkRentCondition,
+  createDepositPayment,
+  mockPayment,
+  simulatePayment
 };
