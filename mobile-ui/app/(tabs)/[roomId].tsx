@@ -10,7 +10,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { getRoomById, rentRoom } from '../../services/api';
+import { checkRentCondition, createDepositPayment, getRoomById, mockPayment } from '../../services/api';
 import { RefreshControl } from 'react-native';
 
 type Room = {
@@ -36,17 +36,17 @@ export default function RoomDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadRoom = async () => {
-  try {
-    setLoading(true);
-    const data = await getRoomById(roomId as string);
-    setRoom(data);
-  } catch {
-    setError('Lấy thông tin phòng thất bại.');
-  } finally {
-    setLoading(false);
-    setRefreshing(false); // <-- reset sau khi refresh
-  }
-};
+    try {
+      setLoading(true);
+      const data = await getRoomById(roomId as string);
+      setRoom(data);
+    } catch {
+      setError('Lấy thông tin phòng thất bại.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false); // <-- reset sau khi refresh
+    }
+  };
 
 
   useEffect(() => {
@@ -56,12 +56,53 @@ export default function RoomDetailScreen() {
 
   const handleRent = async () => {
     if (!room) return;
+
     try {
-      await rentRoom({ room_id: room.room_id, rent_price: room.rent_price });
-      Alert.alert('Thành công', 'Bạn đã thuê phòng thành công!');
-      setIsRented(true);
+      // 1. Kiểm tra điều kiện thuê
+      const condition = await checkRentCondition();
+      if (!condition.canRent) {
+        Alert.alert('Không thể thuê phòng', condition.reason || 'Vui lòng kiểm tra lại.');
+        return;
+      }
+
+      // 2. Tính tiền đặt cọc = 30% giá thuê
+      const redirectLink = 'https://mms-mobile-success.com/my-room'; // đường dẫn sẽ mở lại app sau khi thanh toán
+      const data = await createDepositPayment(room.room_id, room.rent_price, redirectLink);
+
+      if (data?.payUrl) {
+        // 3. Redirect đến trang MoMo
+        // Với React Native có thể dùng `Linking.openURL(...)`
+        import('react-native').then(({ Linking }) => {
+          Linking.openURL(data.payUrl);
+        });
+      } else {
+        Alert.alert('Lỗi', 'Không tạo được đường dẫn thanh toán.');
+      }
     } catch (err: any) {
-      Alert.alert('Lỗi', err?.response?.data?.error || 'Thuê phòng thất bại');
+      Alert.alert('Lỗi', err?.response?.data?.error || 'Không thể thuê phòng lúc này');
+    }
+  };
+
+  const handleMockPayment = async () => {
+    if (!room) return;
+
+    try {
+      const amount = Math.floor(room.rent_price * 0.3);
+      const orderId = `${room.room_id}-mock-${Date.now()}`;
+      const redirectLink = 'https://mms-mobile-success.com/my-room';
+
+      const res = await mockPayment({
+        orderId,
+        amount,
+        type: 'deposit',
+        room_id: room.room_id,
+        rent_price: room.rent_price,
+        redirectLink,
+      });
+
+      alert(res.message)
+    } catch (err: any) {
+      Alert.alert('Lỗi', err?.response?.data?.error || 'Không thể thực hiện giả lập.');
     }
   };
 
@@ -109,9 +150,17 @@ export default function RoomDetailScreen() {
       </View>
 
       {!isRented && room.status === 'Available' ? (
-        <TouchableOpacity style={styles.rentBtn} onPress={handleRent}>
-          <Text style={styles.rentBtnText}>Thuê phòng này</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.rentBtn} onPress={handleRent}>
+            <Text style={styles.rentBtnText}>Thuê phòng này</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.rentBtn, { backgroundColor: '#6c757d', marginTop: 10 }]}
+            onPress={handleMockPayment}
+          >
+            <Text style={styles.rentBtnText}>Giả lập thanh toán</Text>
+          </TouchableOpacity>
+        </>
       ) : (
         <Text style={styles.rentedMsg}>Bạn đang thuê phòng này.</Text>
       )}

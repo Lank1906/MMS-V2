@@ -37,17 +37,22 @@ exports.getAvailableRooms = (address, minPrice, maxPrice, page, limit, callback)
   });
 };
 
-// Lấy chi tiết phòng theo ID
+// Lấy chi tiết phòng theo ID kèm thông tin chủ nhà
 exports.getRoomById = (roomId, callback) => {
   const sql = `
     SELECT 
-      r.room_id, r.room_number, r.status, r.is_active,r.image_url,
+      r.room_id, r.room_number, r.status, r.is_active, r.image_url,
       p.address AS property_address,
-      rt.rent_price,rt.description,rt.max_occupants,rt.electricity_price,rt.water_price,
-      rt.name AS room_type_name
+      rt.rent_price, rt.description, rt.max_occupants, rt.electricity_price, rt.water_price,
+      rt.name AS room_type_name,
+      u.user_id AS landlord_id,
+      u.username AS landlord_name,
+      u.phone AS landlord_phone,
+      u.email AS landlord_email
     FROM Rooms r
     JOIN Properties p ON r.property_id = p.property_id
     JOIN RoomTypes rt ON r.room_type_id = rt.room_type_id
+    JOIN Users u ON p.landlord_id = u.user_id
     WHERE r.room_id = ? AND r.is_active = TRUE AND p.is_active = TRUE
   `;
   db.query(sql, [roomId], (err, results) => {
@@ -71,11 +76,11 @@ exports.getActiveContractsByUser = (userId, callback) => {
 // Hàm tạo hợp đồng mới
 exports.createContract = (contractData, callback) => {
   const sql = `
-    INSERT INTO Contracts (room_id, renter_id, start_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, payment_status, payment_method, is_active)
-    VALUES (?, ?, ?, ?, 0, 0, 0, 'Active', 'Unpaid', NULL, TRUE)
+    INSERT INTO Contracts (room_id, renter_id, start_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, payment_status, payment_method, is_active,deposit_amount)
+    VALUES (?, ?, ?, ?, 0, 0, 0, 'Active', 'Unpaid', NULL, TRUE,?)
   `;
-  const { room_id, renter_id, start_date, rent_price } = contractData;
-  db.query(sql, [room_id, renter_id, start_date, rent_price], (err, result) => {
+  const { room_id, renter_id, start_date, rent_price,amount } = contractData;
+  db.query(sql, [room_id, renter_id, start_date, rent_price,amount], (err, result) => {
     if (err) return callback(err);
     callback(null, result);
   });
@@ -192,5 +197,26 @@ exports.cancelContract = (contractId, callback) => {
     if (err) return callback(err);
     if (result.affectedRows === 0) return callback(new Error('Hợp đồng không tồn tại hoặc không thể hủy.'));
     callback(null, { message: 'Hợp đồng đã được hủy thành công.' });
+  });
+};
+
+exports.getContractsByUserAndPaymentStatus = (userId, paymentStatus, callback) => {
+  const sql = `
+    SELECT * FROM Contracts
+    WHERE renter_id = ? AND payment_status = ? AND is_active = TRUE
+  `;
+  db.query(sql, [userId, paymentStatus], callback);
+};
+
+// Giả lập thanh toán hợp đồng: cập nhật payment_status = 'Paid'
+exports.simulatePayment = (contractId, callback) => {
+  const sql = `
+    UPDATE Contracts 
+    SET payment_status = 'Paid' 
+    WHERE contract_id = ? AND is_active = TRUE
+  `;
+  db.query(sql, [contractId], (err, result) => {
+    if (err) return callback(err);
+    callback(null, result);
   });
 };

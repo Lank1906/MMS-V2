@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   getActiveContracts, getRoomById,
-  leaveRoom, createPayment, cancelContract
+  leaveRoom, createPayment, cancelContract, simulatePayment,
 } from '../../services/api';
 
 interface Contract {
@@ -19,6 +19,7 @@ interface Contract {
   total_electricity_price: string;
   total_water_price: string;
   total_service_price: string;
+  deposit_amount: string;
 }
 
 interface Room {
@@ -45,7 +46,7 @@ export default function RentedRoomsScreen(): JSX.Element {
     today.setHours(0, 0, 0, 0);
 
     // Tính số ngày cách nhau
-    const diffTime =- startDate.getTime() + today.getTime();
+    const diffTime = - startDate.getTime() + today.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
     // Nếu còn ít nhất 3 ngày mới đến ngày bắt đầu => cho phép huỷ
     return diffDays < 3;
@@ -88,7 +89,8 @@ export default function RentedRoomsScreen(): JSX.Element {
     parseFloat(c.rent_price) +
     parseFloat(c.total_electricity_price) +
     parseFloat(c.total_water_price) +
-    parseFloat(c.total_service_price);
+    parseFloat(c.total_service_price) -
+    parseFloat(c.deposit_amount || '0');
 
   const handleLeave = async (contract: Contract): Promise<void> => {
     if (contract.payment_status !== 'Paid') {
@@ -162,6 +164,20 @@ export default function RentedRoomsScreen(): JSX.Element {
     ]);
   };
 
+  const handleSimulatePayment = async (contract: Contract) => {
+    try {
+      setProcessingContractId(contract.contract_id);
+      await simulatePayment(contract.contract_id);
+      await reloadContracts();
+      Alert.alert('Thành công', 'Giả lập thanh toán thành công.');
+    } catch(err) {
+      console.log(err)
+      Alert.alert('Lỗi', 'Không thể giả lập thanh toán.');
+    } finally {
+      setProcessingContractId(null);
+    }
+  };
+
   const groupedContracts = contracts.reduce((acc, c) => {
     if (!acc[c.room_id]) acc[c.room_id] = [];
     acc[c.room_id].push(c);
@@ -213,6 +229,7 @@ export default function RentedRoomsScreen(): JSX.Element {
                     <Text>Trạng thái: {c.status}</Text>
                     <Text>Thanh toán: <Text style={{ color: c.payment_status === 'Paid' ? 'green' : 'red' }}>{c.payment_status}</Text></Text>
                     <Text>Tiền phòng: {parseFloat(c.rent_price).toLocaleString('vi-VN')} VNĐ</Text>
+                    <Text>Tiền đặt cọc: {parseFloat(c.deposit_amount).toLocaleString('vi-VN')} VNĐ</Text>
                     <Text>Tiền điện: {parseFloat(c.total_electricity_price).toLocaleString('vi-VN')} VNĐ</Text>
                     <Text>Tiền nước: {parseFloat(c.total_water_price).toLocaleString('vi-VN')} VNĐ</Text>
                     <Text>Tiền dịch vụ: {parseFloat(c.total_service_price).toLocaleString('vi-VN')} VNĐ</Text>
@@ -230,6 +247,15 @@ export default function RentedRoomsScreen(): JSX.Element {
                           onPress={() => handleCancelContract(c)}
                         >
                           <Text style={styles.btnText}>Huỷ hợp đồng</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.btnPay, { flex: 1, backgroundColor: '#6c5ce7' }]}
+                          onPress={() => handleSimulatePayment(c)}
+                          disabled={isProcessing(c)}
+                        >
+                          <Text style={styles.btnText}>
+                            {isProcessing(c) ? 'Đang xử lý...' : 'Giả lập thanh toán'}
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     )}

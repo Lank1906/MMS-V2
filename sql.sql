@@ -626,3 +626,4 @@ INSERT INTO Room_Services (room_id, service_id, is_active) VALUES (54, 9, TRUE);
 INSERT INTO Room_Services (room_id, service_id, is_active) VALUES (54, 10, TRUE);
 
 ALTER TABLE Rooms ADD COLUMN image_url VARCHAR(500) DEFAULT NULL;
+ALTER TABLE Contracts ADD COLUMN deposit_amount DECIMAL(10,2) DEFAULT 0;

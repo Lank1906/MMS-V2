@@ -8,10 +8,13 @@ router.get('/rooms/available', renterController.getAvailableRooms);
 router.get('/rooms/:roomId', renterController.getRoomDetail);
 router.get('/contracts/active', renterController.getActiveContracts);
 router.post('/contracts/rent', renterController.rentRoom);
+router.get('/contracts/check-rent', renterController.checkCanRentRoom);
 router.put('/contracts/leave/:contractId', renterController.leaveRoom);
+router.put('/contracts/:id/simulate-payment', renterController.simulatePayment);
 router.put('/contracts/:contractId/cancel', renterController.cancelContract);
 router.get('/profile', renterController.getProfile);
 router.put('/profile', renterController.updateProfile);
 router.post('/create-payment',renterController.createPayment);
+router.post('/mock-payment', renterController.mockPaymentSuccess);
 
 module.exports = router;

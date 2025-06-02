@@ -136,6 +136,85 @@ export const cancelContract = async (contractId: string) => {
   return res.data;
 };
 
+export const checkRentCondition = async () => {
+  const token = await getToken();
+  const res = await axios.get(`${RENTER_URL}/contracts/check-rent`, {
+    headers: { Authorization: token },
+  });
+  return res.data; // { canRent: true/false, reason?: string }
+};
+
+export const createDepositPayment = async (room_id: number, rent_price: number, redirectLink: string) => {
+  const token = await getToken();
+  const amount = Math.floor(rent_price * 0.3); // 30% tiền thuê
+  const orderId = `${room_id}-${Date.now()}`;
+  const orderInfo = `Đặt cọc thuê phòng ${room_id}`;
+
+  const res = await axios.post(`${RENTER_URL}/create-payment`, {
+    amount,
+    orderId,
+    orderInfo,
+    redirectLink,
+    extraData: {
+      room_id,
+      rent_price,
+      type: 'deposit',
+      redirectLink
+    }
+  }, {
+    headers: { Authorization: token },
+  });
+
+  return res.data; // trả về { payUrl }
+};
+
+export const mockPayment = async ({
+  orderId,
+  amount,
+  type,
+  room_id,
+  rent_price,
+  redirectLink
+}: {
+  orderId: string;
+  amount: number;
+  type: string;
+  room_id: number;
+  rent_price: number;
+  redirectLink: string;
+}) => {
+  const token = await getToken();
+  const res = await axios.post(`${RENTER_URL}/mock-payment`, {
+    orderId,
+    amount,
+    type,
+    room_id,
+    rent_price,
+    redirectLink,
+  }, {
+    headers: { Authorization: token },
+  });
+
+  return res.data;
+};
+
+export const simulatePayment = async (contractId: number): Promise<any> => {
+  try {
+    const token = await getToken(); // <-- CHỖ SỬA
+    const res = await axios.put(
+      `${RENTER_URL}/contracts/${contractId}/simulate-payment`,
+      null,
+      {
+        headers: { Authorization: token },
+      }
+    );
+    return res.data;
+  } catch (error: any) {
+    console.error('Error simulating payment:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export default {
   login,
   register,
@@ -150,5 +229,9 @@ export default {
   updateProfile,
   createPayment,
   uploadImage,
-  cancelContract
+  cancelContract,
+  checkRentCondition,
+  createDepositPayment,
+  mockPayment,
+  simulatePayment
 };
