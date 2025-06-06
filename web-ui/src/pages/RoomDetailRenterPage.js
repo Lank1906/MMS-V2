@@ -39,7 +39,7 @@ const RoomDetailRenterPage = () => {
         depositAmount,
         `${room.room_id}-${Date.now()}`,
         `Đặt cọc thuê phòng ${room.room_number}`,
-        'http://localhost:3000/my-room' // hoặc `${window.location.origin}/my-room`
+        'http://localhost:3000/#/my-room' // hoặc `${window.location.origin}/my-room`
       );
 
       if (paymentData?.payUrl) {
@@ -83,6 +83,9 @@ const RoomDetailRenterPage = () => {
                 style={{ backgroundColor: '#f39c12', marginLeft: '12px' }}
                 onClick={async () => {
                   try {
+                    const depositAmount = Math.floor(room.rent_price * 0.3);
+                    const confirm = window.confirm(`Bạn cần đặt cọc ${depositAmount.toLocaleString('vi-VN')}₫ để thuê phòng. Tiếp tục?`);
+                    if (!confirm) return;
                     const fakeOrderId = `${room.room_id}-${Date.now()}`;
                     await renterService.mockPayment({
                       orderId: fakeOrderId,

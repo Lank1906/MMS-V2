@@ -23,14 +23,14 @@ const Sidebar = () => {
 
         {currentUser.role === 'Admin' && (
           <>
-            <li><Link to="/dashboard" className="menu-item">📊 Dashboard</Link></li>
+            <li><Link to="/dashboard" className="menu-item">📊 Trang Chủ</Link></li>
             <li><Link to="/user-management" className="menu-item">👤 Quản lý người dùng</Link></li>
           </>
         )}
 
         {currentUser.role === 'Landlord' && (
           <>
-            <li><Link to="/dashboard" className="menu-item">📊 Dashboard</Link></li>
+            <li><Link to="/dashboard" className="menu-item">📊 Trang Chủ</Link></li>
             <li><Link to="/property-management" className="menu-item">🏘 Quản lý cụm nhà trọ</Link></li>
             <li><Link to="/room-management" className="menu-item">🏠 Quản lý phòng</Link></li>
             <li><Link to="/room-type-management" className="menu-item">⚙️ Quản lý loại phòng</Link></li>
@@ -41,7 +41,7 @@ const Sidebar = () => {
          {currentUser.role === 'Renter' && (
           <>
             <li>
-              <Link to="/dashboard" className="menu-item">📊 Dashboard</Link>
+              <Link to="/dashboard" className="menu-item">📊 Trang Chủ</Link>
             </li>
             <li>
               <Link to="/my-room" className="menu-item">🏡 Phòng đang thuê</Link>

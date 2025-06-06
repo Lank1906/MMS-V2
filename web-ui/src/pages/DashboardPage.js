@@ -84,7 +84,7 @@ const DashboardPage = () => {
       
       <PieChart>
         <Pie
-          data={[{ name: 'Phòng trống', value: data.availableRooms || 0 }, { name: 'Phòng đã thuê', value: data.rentedRooms || 0 }]}
+          data={[{ name: 'Phòng trống', value: data.availableRooms || 0 }, { name: 'Phòng đã thuê', value: data.rentedRooms || 0 },{name:'Phòng cần dọn dẹp',value:data.maintainRooms}]}
           cx="50%" cy="50%" outerRadius={100} label dataKey="value"
         >
           <Cell fill="#0088FE" />
