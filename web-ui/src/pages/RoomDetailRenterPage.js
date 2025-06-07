@@ -39,7 +39,7 @@ const RoomDetailRenterPage = () => {
         depositAmount,
         `${room.room_id}-${Date.now()}`,
         `Đặt cọc thuê phòng ${room.room_number}`,
-        'http://localhost:3000/#/my-room' // hoặc `${window.location.origin}/my-room`
+        'https://lank1906.github.io/MMS-V2/#/my-room' // hoặc `${window.location.origin}/my-room`
       );
 
       if (paymentData?.payUrl) {
@@ -93,10 +93,10 @@ const RoomDetailRenterPage = () => {
                       type: 'deposit',
                       room_id: room.room_id,
                       rent_price: room.rent_price,
-                      redirectLink: `${window.location.origin}/#/my-room`
+                      redirectLink: `${window.location.origin}/MMS-V2/#/my-room`
                     });
                     alert('✅ Giả lập thanh toán thành công!');
-                    window.location.href = '/my-room';
+                    window.location.href = '/MMS-V2/#/my-room';
                   } catch (err) {
                     alert('❌ Mock thất bại: ' + (err.response?.data?.error || err.message));
                   }

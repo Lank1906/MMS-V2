@@ -13,7 +13,7 @@ const RegisterPage = () => {
     try {
       const response = await register(username, email, password, phone);
       console.log('Registration successful', response);
-      navigate('/login')
+      navigate('/MMS-V2/#/login')
     } catch (err) {
       setError('Đăng ký thất bại. Kiểm tra lại thông tin.');
     } finally {

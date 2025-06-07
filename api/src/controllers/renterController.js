@@ -207,7 +207,7 @@ exports.createPayment = async (req, res) => {
 exports.redirectPayment = (req, res) => {
   const { orderId, resultCode, message, amount, transId, extraData } = req.query;
 
-  let redirectClientUrl = 'http://localhost:3000/my-room';
+  let redirectClientUrl = 'http://localhost:3000/#/my-room';
   let type = null;
   let room_id = null;
   let rent_price = null;

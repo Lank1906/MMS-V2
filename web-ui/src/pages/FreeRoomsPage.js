@@ -108,7 +108,7 @@ const FreeRoomsPage = () => {
               <p><b>Địa chỉ:</b> {room.property_address}</p>
               <p><b>Loại phòng:</b> {room.room_type_name}</p>
               <p className="price">{Number(room.rent_price).toLocaleString('vi-VN')} VNĐ/tháng</p>
-              <a href={`/#/renter-room-detail/${room.room_id}`} className="rent-button">Thuê ngay</a>
+              <a href={`/MMS-V2/#/renter-room-detail/${room.room_id}`} className="rent-button">Thuê ngay</a>
             </div>
           </div>
         ))}

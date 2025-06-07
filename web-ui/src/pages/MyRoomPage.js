@@ -85,7 +85,7 @@ const MyRoomPage = () => {
         remainingAmount,
         contract.contract_id,
         `Thanh toán phần còn lại hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
-        'http://localhost:3000/#/my-room'
+        'https://lank1906.github.io/MMS-V2/#/my-room'
       );
 
       if (paymentData?.payUrl) {

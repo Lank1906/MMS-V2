@@ -32,7 +32,7 @@ const LoginForm = ({ onLogin }) => {
         />
       </div>
       <button type="submit" className="submit-button">Đăng nhập</button>
-      <p><a href='/#/register'>Chưa có tài khoản? Đăng ký ngay</a></p>
+      <p><a href='/MMS-V2/#/register'>Chưa có tài khoản? Đăng ký ngay</a></p>
     </form>
   );
 };
