@@ -27,7 +27,7 @@ export const getContractById = async (id) => {
 
 // Tạo hợp đồng mới
 export const createContract = async (data) => {
-  console.log(data)
+  // Dữ liệu phải bao gồm: room_id, renter_id, start_date, end_date, term_months, deposit_amount, status
   const res = await axios.post(API_URL, data, {
     headers: { Authorization: getToken() }
   });
@@ -36,13 +36,14 @@ export const createContract = async (data) => {
 
 // Cập nhật hợp đồng
 export const updateContract = async (id, data) => {
+  // Cần truyền: start_date, end_date, term_months, deposit_amount, status, room_id (để cập nhật usage)
   const res = await axios.put(`${API_URL}/${id}`, data, {
     headers: { Authorization: getToken() }
   });
   return res.data;
 };
 
-// Xoá hợp đồng (cập nhật is_active = false hoặc xoá thật tuỳ backend)
+// Xoá hợp đồng (soft delete)
 export const deleteContract = async (id) => {
   const res = await axios.delete(`${API_URL}/${id}`, {
     headers: { Authorization: getToken() }

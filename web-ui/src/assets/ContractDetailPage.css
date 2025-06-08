@@ -1,0 +1,150 @@
+.contract-page {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  align-items: flex-start;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.contract-room-info {
+  flex: 1;
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.contract-room-info .info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.contract-room-info .info-grid div {
+  font-weight: 500;
+}
+
+.bill-section {
+  flex: 2;
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bill-section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.bill-section th,
+.bill-section td {
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.btn-add {
+  background-color: #3f51b5;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-add:hover {
+  background-color: #303f9f;
+}
+
+.btn-delete {
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}
+
+.bill-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.bill-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.bill-modal h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.bill-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bill-modal label {
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bill-modal input,
+.bill-modal textarea {
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.bill-modal button[type='submit'] {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.bill-modal .close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+}

@@ -5,9 +5,12 @@ import { getRoomServices, createRoomService, deleteRoomService } from '../servic
 import { getRoomById } from '../services/roomService';
 import { getServices } from '../services/serviceService';
 import { getRoomRentersByRoomId, deleteRoomRenter } from '../services/roomRenterService';
+import { useNavigate } from 'react-router-dom';
 import '../assets/RoomDetailPage.css'
 
 const RoomDetailPage = () => {
+    const navigate = useNavigate();
+    
     const { roomId } = useParams();
     const [room, setRoom] = useState(null);
     const [contracts, setContracts] = useState([]);
@@ -106,8 +109,8 @@ const RoomDetailPage = () => {
 
     const handleSaveContract = async (e) => {
         e.preventDefault();
-        const { start_date, rent_price, status, end_date, old_electricity_usage,new_electricity_usage,old_water_usage,new_water_usage } = newContract;
-        if (!start_date || !rent_price || !status ||!end_date) {
+        const { start_date, rent_price, status, end_date, old_electricity_usage, new_electricity_usage, old_water_usage, new_water_usage } = newContract;
+        if (!start_date || !rent_price || !status || !end_date) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
         }
@@ -364,67 +367,30 @@ const RoomDetailPage = () => {
                     flexBasis: '33%',
                     overflowY: 'auto',
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ marginBottom: 12 }}>
                         <h2 style={{ margin: 0, color: '#333' }}>Hợp đồng phòng</h2>
-                        <button
-                            onClick={() => {
-                                setContractId(0);
-                                setShowContractModal(true);
-                                setNewContract(prev => ({ ...prev, total_service_price: services.reduce((sum, svc) => sum + (Number(svc.service_price) || 0), 0) || 0 }));
-                            }}
-                            style={{
-                                background: '#3f51b5',
-                                color: 'white',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                fontWeight: '600'
-                            }}
-                        >
-                            + Thêm hợp đồng
-                        </button>
                     </div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
                             <tr style={{ background: '#3f51b5', color: 'white', textAlign: 'left' }}>
                                 <th style={{ padding: 12 }}>Ngày bắt đầu</th>
                                 <th style={{ padding: 12 }}>Ngày kết thúc</th>
-                                <th style={{ padding: 12 }}>Tiền thuê</th>
-                                <th style={{ padding: 12 }}>Tiền nước</th>
-                                <th style={{ padding: 12 }}>Tiền điện</th>
-                                <th style={{ padding: 12 }}>Tiền dịch vụ</th>
                                 <th style={{ padding: 12 }}>Trạng thái</th>
-                                <th style={{ padding: 12 }}>Phương thức</th>
-                                <th style={{ padding: 12 }}>Trạng thái thanh toán</th>
-                                <th style={{ padding: 12 }}>Ngày thanh toán</th>
                                 <th style={{ padding: 12 }}>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             {contracts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="11" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
+                                    <td colSpan="4" style={{ padding: 12, textAlign: 'center' }}>Không có hợp đồng</td>
                                 </tr>
                             ) : (
                                 contracts.map(contract => (
-                                    <tr key={contract.contract_id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <tr key={contract.contract_id} style={{ borderBottom: '1px solid #eee' }} onClick={() => navigate(`/contracts/${contract.contract_id}`)}>
                                         <td style={{ padding: 12 }}>{new Date(contract.start_date).toLocaleDateString()}</td>
                                         <td style={{ padding: 12 }}>{contract.end_date ? new Date(contract.end_date).toLocaleDateString() : '-'}</td>
-                                        <td style={{ padding: 12 }}>{Number(contract.rent_price).toLocaleString('vi-VN')} đ</td>
-                                        <td style={{ padding: 12 }}>{Number(contract.total_water_price)?.toLocaleString('vi-VN') || 0} đ</td>
-                                        <td style={{ padding: 12 }}>{Number(contract.total_electricity_price)?.toLocaleString('vi-VN') || 0} đ</td>
-                                        <td style={{ padding: 12 }}>{Number(contract.total_service_price)?.toLocaleString('vi-VN') || 0} đ</td>
                                         <td style={{ padding: 12 }}>{contract.status}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_method || '-'}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_status || '-'}</td>
-                                        <td style={{ padding: 12 }}>{contract.payment_date ? new Date(contract.payment_date).toLocaleDateString() : '-'}</td>
                                         <td style={{ padding: 12 }}>
-                                            <button
-                                                onClick={() => handleEditContract(contract)}
-                                                style={{ background: '#1976d2', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 6 }}>
-                                                Sửa
-                                            </button>
                                             <button
                                                 onClick={() => handleDeleteContract(contract.contract_id)}
                                                 style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}>

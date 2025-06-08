@@ -168,7 +168,7 @@ export const createDepositPayment = async (room_id, rent_price, redirectLink) =>
   return res.data; // payUrl
 };
 
-export const mockPayment = async ({ orderId, amount, type, room_id, rent_price, redirectLink }) => {
+export const mockPayment = async ({ orderId, amount, type, room_id, rent_price,months, redirectLink }) => {
   try {
     const res = await axios.post(`${API_URL}/mock-payment`, {
       orderId,
@@ -176,6 +176,7 @@ export const mockPayment = async ({ orderId, amount, type, room_id, rent_price, 
       type,
       room_id,
       rent_price,
+      months,
       redirectLink
     }, {
       headers: { Authorization: getToken() },
@@ -200,6 +201,20 @@ export const simulatePayment = async (contractId) => {
   }
 };
 
+// ✅ Lấy danh sách bills theo contractId
+export const getBillsByContractId = async (contractId) => {
+  try {
+    const res = await axios.get(`${API_URL}/bills`, {
+      headers: { Authorization: getToken() },
+      params: { contractId }
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách hóa đơn:', error);
+    throw error;
+  }
+};
+
 export default {
   getAvailableRooms,
   getRoomById,
@@ -213,5 +228,6 @@ export default {
   checkRentCondition,
   createDepositPayment,
   mockPayment,
-  simulatePayment
+  simulatePayment,
+  getBillsByContractId
 };

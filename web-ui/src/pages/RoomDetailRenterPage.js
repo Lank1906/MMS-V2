@@ -8,6 +8,7 @@ const RoomDetailRenterPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isRented, setIsRented] = useState(false);
+  const [termMonths, setTermMonths] = useState(1);
 
   useEffect(() => {
     const loadRoom = async () => {
@@ -31,15 +32,21 @@ const RoomDetailRenterPage = () => {
         return alert(`Không thể thuê phòng: ${check.reason}`);
       }
 
-      const depositAmount = Math.floor(room.rent_price * 0.3);
-      const confirm = window.confirm(`Bạn cần đặt cọc ${depositAmount.toLocaleString('vi-VN')}₫ để thuê phòng. Tiếp tục?`);
+      let months = prompt('Bạn muốn thuê phòng trong bao nhiêu tháng? (Nhập số nguyên, ví dụ: 3)');
+      months = parseInt(months);
+      if (isNaN(months) || months <= 0) return alert('Số tháng không hợp lệ.');
+
+      setTermMonths(months);
+
+      const totalAmount = room.rent_price * months;
+      const confirm = window.confirm(`Bạn cần thanh toán trước ${totalAmount.toLocaleString('vi-VN')}₫ cho ${months} tháng thuê. Tiếp tục?`);
       if (!confirm) return;
 
       const paymentData = await renterService.createPayment(
-        depositAmount,
+        totalAmount,
         `${room.room_id}-${Date.now()}`,
-        `Đặt cọc thuê phòng ${room.room_number}`,
-        'https://lank1906.github.io/MMS-V2/#/my-room' // hoặc `${window.location.origin}/my-room`
+        `Thanh toán ${months} tháng thuê phòng ${room.room_number}`,
+        'https://lank1906.github.io/MMS-V2/#/my-room'
       );
 
       if (paymentData?.payUrl) {
@@ -83,18 +90,25 @@ const RoomDetailRenterPage = () => {
                 style={{ backgroundColor: '#f39c12', marginLeft: '12px' }}
                 onClick={async () => {
                   try {
-                    const depositAmount = Math.floor(room.rent_price * 0.3);
-                    const confirm = window.confirm(`Bạn cần đặt cọc ${depositAmount.toLocaleString('vi-VN')}₫ để thuê phòng. Tiếp tục?`);
+                    let months = prompt('Bạn muốn giả lập thuê phòng bao nhiêu tháng? (Nhập số nguyên, ví dụ: 3)');
+                    months = parseInt(months);
+                    if (isNaN(months) || months <= 0) return alert('Số tháng không hợp lệ.');
+
+                    const totalAmount = room.rent_price * months;
+                    const confirm = window.confirm(`Bạn cần đóng trước ${totalAmount.toLocaleString('vi-VN')}₫ cho ${months} tháng. Tiếp tục?`);
                     if (!confirm) return;
+
                     const fakeOrderId = `${room.room_id}-${Date.now()}`;
                     await renterService.mockPayment({
                       orderId: fakeOrderId,
-                      amount: Math.floor(room.rent_price * 0.3),
+                      amount: totalAmount,
                       type: 'deposit',
                       room_id: room.room_id,
                       rent_price: room.rent_price,
+                      months:months,
                       redirectLink: `${window.location.origin}/MMS-V2/#/my-room`
                     });
+
                     alert('✅ Giả lập thanh toán thành công!');
                     window.location.href = '/MMS-V2/#/my-room';
                   } catch (err) {

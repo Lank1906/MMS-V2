@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { getActiveContracts, leaveRoom, getRoomById, createPayment, cancelContract,simulatePayment } from '../services/renterService';
+import {
+  getActiveContracts,
+  leaveRoom,
+  getRoomById,
+  createPayment,
+  cancelContract,
+  simulatePayment,
+  getBillsByContractId
+} from '../services/renterService';
 import '../assets/MyRoomPage.css';
 
 const MyRoomPage = () => {
   const [contracts, setContracts] = useState([]);
   const [roomsMap, setRoomsMap] = useState({});
+  const [billsMap, setBillsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedRooms, setExpandedRooms] = useState({});
@@ -16,11 +25,19 @@ const MyRoomPage = () => {
       try {
         const dataContracts = await getActiveContracts();
         setContracts(dataContracts || []);
-        const uniqueRoomIds = [...new Set((dataContracts || []).map(c => c.room_id))];
+
+        const uniqueRoomIds = [...new Set(dataContracts.map(c => c.room_id))];
         const rooms = await Promise.all(uniqueRoomIds.map(id => getRoomById(id)));
-        const map = {};
-        rooms.forEach(r => { if (r) map[r.room_id] = r; });
-        setRoomsMap(map);
+        const roomMap = {};
+        rooms.forEach(r => { if (r) roomMap[r.room_id] = r; });
+        setRoomsMap(roomMap);
+
+        const billData = {};
+        for (const contract of dataContracts) {
+          const bills = await getBillsByContractId(contract.contract_id);
+          billData[contract.contract_id] = bills;
+        }
+        setBillsMap(billData);
       } catch {
         setError('Lỗi tải dữ liệu');
       } finally {
@@ -40,17 +57,31 @@ const MyRoomPage = () => {
     setExpandedRooms(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const canLeave = (roomContracts) => roomContracts.some(c => c.payment_status === 'Paid');
+  const canLeave = (roomContracts) => {
+    return roomContracts.every(contract => {
+      const bills = billsMap[contract.contract_id] || [];
+      return bills.length > 0 && bills.every(b => b.payment_status === 'Paid');
+    });
+  };
 
   const handleLeave = async (roomContracts, roomId) => {
-    const paid = roomContracts.find(c => c.payment_status === 'Paid');
-    if (!paid) return alert('Phải thanh toán hợp đồng trước khi trả phòng');
+    const unpaidContract = roomContracts.find(c => {
+      const bills = billsMap[c.contract_id] || [];
+      return bills.some(b => b.payment_status !== 'Paid');
+    });
+
+    if (unpaidContract) {
+      return alert('Phải thanh toán tất cả hóa đơn trước khi trả phòng.');
+    }
+
+    const contractToLeave = roomContracts[0];
     if (!window.confirm(`Trả phòng ${roomsMap[roomId]?.room_number}?`)) return;
-    setLeavingContractId(paid.contract_id);
+
+    setLeavingContractId(contractToLeave.contract_id);
     try {
-      await leaveRoom(paid.contract_id);
+      await leaveRoom(contractToLeave.contract_id);
       alert('Trả phòng thành công!');
-      setContracts(prev => prev.filter(c => c.contract_id !== paid.contract_id));
+      setContracts(prev => prev.filter(c => c.contract_id !== contractToLeave.contract_id));
     } catch {
       alert('Lỗi trả phòng');
     } finally {
@@ -58,33 +89,18 @@ const MyRoomPage = () => {
     }
   };
 
-  const getTotalAmount = (contract) =>
-    parseFloat(contract.rent_price) +
-    parseFloat(contract.total_electricity_price) +
-    parseFloat(contract.total_water_price) +
-    parseFloat(contract.total_service_price) -
-    parseFloat(contract.deposit_amount || '0');
-
-  const handlePayment = async (contract) => {
+  const handlePayment = async (contract, bill) => {
     if (!contract.end_date) {
       alert("Chủ thuê chưa cập nhật số điện của bạn. Vui lòng chờ đợi!");
       return;
     }
 
     try {
-      const totalAmount = Math.floor(getTotalAmount(contract));
-      const deposit = parseFloat(contract.deposit_amount || 0);
-      const remainingAmount = totalAmount - deposit;
-
-      if (remainingAmount <= 0) {
-        alert("Hợp đồng đã được thanh toán đầy đủ hoặc tiền đặt cọc vượt quá số tiền phải trả.");
-        return;
-      }
 
       const paymentData = await createPayment(
-        remainingAmount,
+        50000,
         contract.contract_id,
-        `Thanh toán phần còn lại hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
+        `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
         'https://lank1906.github.io/MMS-V2/#/my-room'
       );
 
@@ -103,11 +119,11 @@ const MyRoomPage = () => {
     const today = new Date();
     const diffInDays = Math.ceil((start.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) / 86400000);
     if (diffInDays < 0 || diffInDays > 3) {
-      alert('Bạn chỉ có thể hủy hợp đồng trong vòng 3 ngày sau khi hợp đồng bắt đầu.');
+      alert('Bạn chỉ có thể hủy hợp đồng trong vòng 3 ngày sau khi bắt đầu.');
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc chắn muốn hủy hợp đồng ${contract.contract_id}? Bạn sẽ không thể nhận lại số tiền đã cọc!`)) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy hợp đồng ${contract.contract_id}?`)) return;
 
     try {
       await cancelContract(contract.contract_id);
@@ -140,11 +156,11 @@ const MyRoomPage = () => {
                   className="myroom-img"
                 />
                 <div>
-                  <div className="myroom-room-number">{room?.room_number || '...'}</div>
-                  <div className="myroom-room-address">{room?.property_address || '...'}</div>
+                  <div className="myroom-room-number">{room?.room_number}</div>
+                  <div className="myroom-room-address">{room?.property_address}</div>
                 </div>
                 <div className="myroom-owner">
-                  <span><strong>Chủ nhà:</strong> {room?.landlord_name || 'N/A'} ({room?.landlord_phone || 'N/A'})</span>
+                  <span><strong>Chủ nhà:</strong> {room?.landlord_name} ({room?.landlord_phone})</span>
                 </div>
               </div>
               <button
@@ -152,12 +168,10 @@ const MyRoomPage = () => {
                 disabled={!leaveAllowed || leavingContractId !== null}
                 onClick={(e) => {
                   e.stopPropagation();
-                  leaveAllowed
-                    ? handleLeave(roomContracts, roomId)
-                    : alert('Phải thanh toán hợp đồng trước khi trả phòng');
+                  handleLeave(roomContracts, roomId);
                 }}
               >
-                {leavingContractId === roomContracts.find(c => c.payment_status === 'Paid')?.contract_id
+                {leavingContractId === roomContracts[0].contract_id
                   ? 'Đang xử lý...'
                   : 'Trả phòng'}
               </button>
@@ -166,11 +180,9 @@ const MyRoomPage = () => {
               <table className="myroom-contract-table">
                 <thead>
                   <tr>
-                    <th>Mã hợp đồng</th>
+                    <th>Mã hóa đơn</th>
                     <th>Thời gian</th>
-                    <th>Trạng thái</th>
                     <th>Thanh toán</th>
-                    <th>Đã trả</th>
                     <th>Tiền phòng</th>
                     <th>Điện</th>
                     <th>Nước</th>
@@ -180,61 +192,62 @@ const MyRoomPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {roomContracts.map(c => (
-                    <tr key={c.contract_id}>
-                      <td>{c.contract_id}</td>
-                      <td>{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
-                      <td>{c.status}</td>
-                      <td>{c.payment_status}</td>
-                      <td>{parseFloat(c.deposit_amount).toLocaleString('vi-VN')} VNĐ</td>
-                      <td>{parseFloat(c.rent_price).toLocaleString('vi-VN')}₫</td>
-                      <td>{parseFloat(c.total_electricity_price).toLocaleString('vi-VN')}₫</td>
-                      <td>{parseFloat(c.total_water_price).toLocaleString('vi-VN')}₫</td>
-                      <td>{parseFloat(c.total_service_price).toLocaleString('vi-VN')}₫</td>
-                      <td><strong>{getTotalAmount(c).toLocaleString('vi-VN')}₫</strong></td>
-                      <td>
-                        {c.payment_status === 'Unpaid' && (
-                          <>
-                            <button className="payment-btn" onClick={() => handlePayment(c)}>
-                              Tạo thanh toán
-                            </button>
-                            <br />
-                            <button
-                              className="cancel-btn payment-btn"
-                              style={{ backgroundColor: '#f44336', color: 'white' }}
-                              onClick={() => handleCancel(c)}
-                            >
-                              Hủy hợp đồng
-                            </button>
-                            <button
-                              className="simulate-btn payment-btn"
-                              style={{ backgroundColor: '#9c27b0', color: 'white', marginTop: '6px' }}
-                              onClick={async () => {
-                                if (window.confirm('Bạn có chắc muốn giả lập thanh toán cho hợp đồng này?')) {
-                                  try {
-                                    await simulatePayment(c.contract_id);
-                                    alert('Giả lập thanh toán thành công!');
-                                    // Cập nhật lại contracts sau khi giả lập
-                                    setContracts(prev =>
-                                      prev.map(cc =>
-                                        cc.contract_id === c.contract_id
-                                          ? { ...cc, payment_status: 'Paid' }
-                                          : cc
-                                      )
-                                    );
-                                  } catch {
-                                    alert('Lỗi khi giả lập thanh toán!');
+                  {roomContracts.map(c => {
+                    const bills = billsMap[c.contract_id] || [];
+                    return bills.map((bill, idx) => (
+                      <tr key={`${c.contract_id}_${idx}`}>
+                        <td>{bill?.bill_id}</td>
+                        <td>{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
+                        <td>{bill?.payment_status || 'Unpaid'}</td>
+                        <td>{bill?.rent_amount?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{bill?.electricity_amount?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{bill?.water_amount?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{bill?.service_amount?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td><strong>{bill?.total_amount?.toLocaleString('vi-VN') || 0}₫</strong></td>
+                        <td>
+                          {bill?.payment_status === 'Unpaid' && (
+                            <>
+                              <button className="payment-btn" onClick={() => handlePayment(c, bill)}>
+                                Tạo thanh toán
+                              </button>
+                              <br />
+                              <button
+                                className="cancel-btn payment-btn"
+                                style={{ backgroundColor: '#f44336', color: 'white' }}
+                                onClick={() => handleCancel(c)}
+                              >
+                                Hủy hợp đồng
+                              </button>
+                              <button
+                                className="simulate-btn payment-btn"
+                                style={{ backgroundColor: '#9c27b0', color: 'white', marginTop: '6px' }}
+                                onClick={async () => {
+                                  if (window.confirm('Bạn có chắc muốn giả lập thanh toán cho hóa đơn này?')) {
+                                    try {
+                                      await simulatePayment(c.contract_id);
+                                      setBillsMap(prev => ({
+                                        ...prev,
+                                        [c.contract_id]: prev[c.contract_id].map(b =>
+                                          b.bill_id === bill.bill_id
+                                            ? { ...b, payment_status: 'Paid', payment_date: new Date() }
+                                            : b
+                                        )
+                                      }));
+                                      alert('Giả lập thanh toán thành công!');
+                                    } catch {
+                                      alert('Lỗi khi giả lập thanh toán!');
+                                    }
                                   }
-                                }
-                              }}
-                            >
-                              Giả lập thanh toán
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                                }}
+                              >
+                                Giả lập thanh toán
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ));
+                  })}
                 </tbody>
               </table>
             )}

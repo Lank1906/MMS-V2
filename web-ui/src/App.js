@@ -1,4 +1,5 @@
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { getCurrentUser } from './services/authService';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -9,6 +10,7 @@ import RoomTypeManagementPage from './pages/RoomTypeManagementPage';
 import ServiceManagementPage from './pages/ServiceManagementPage';
 import AdminUserManagementPage from './pages/AdminManagementPage';
 import RoomDetailPage from './pages/RoomDetailPage';
+import ContractDetailPage from './pages/ContractDetailPage';
 
 import RoomDetailRenterPage from './pages/RoomDetailRenterPage'; 
 import FreeRoomsPage from './pages/FreeRoomsPage';     
@@ -19,7 +21,16 @@ import Sidebar from './components/Sidebar';
 import './App.css';
 
 const App = () => {
-  const currentUser = getCurrentUser();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <div>Đang tải...</div>; // hoặc spinner
 
   return (
     <Router>
@@ -55,6 +66,7 @@ const App = () => {
                     <Route path="/room-type-management" element={<RoomTypeManagementPage />} />
                     <Route path="/service-management" element={<ServiceManagementPage />} />
                     <Route path="/room-detail/:roomId" element={<RoomDetailPage />} />
+                    <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
                   </>
                 )}
 
