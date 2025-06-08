@@ -14,6 +14,7 @@ const serviceRoutes = require('./routes/serviceRoutes');
 const roomRenterRoutes = require('./routes/roomRenterRoutes'); 
 const renterRoutes = require('./routes/renterRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const billRoutes = require('./routes/billRoutes');
 
 dotenv.config();
 
@@ -24,7 +25,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Cấu hình CORS cho frontend React
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
@@ -44,6 +45,7 @@ app.use('/api/room-services', roomServiceRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/room-renter', roomRenterRoutes);
 app.use('/api/renter', renterRoutes);
+app.use('/api/bills', billRoutes);
 
 // Route kiểm tra server
 app.get('/', (req, res) => {

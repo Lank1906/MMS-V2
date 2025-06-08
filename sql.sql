@@ -627,3 +627,29 @@ INSERT INTO Room_Services (room_id, service_id, is_active) VALUES (54, 10, TRUE)
 
 ALTER TABLE Rooms ADD COLUMN image_url VARCHAR(500) DEFAULT NULL;
 ALTER TABLE Contracts ADD COLUMN deposit_amount DECIMAL(10,2) DEFAULT 0;
+ALTER TABLE Contracts
+ADD COLUMN term_months INT DEFAULT 1;
+ALTER TABLE Contracts
+DROP COLUMN rent_price,
+DROP COLUMN total_water_price,
+DROP COLUMN total_electricity_price,
+DROP COLUMN total_service_price,
+DROP COLUMN payment_status,
+DROP COLUMN payment_date,
+DROP COLUMN payment_method;
+
+CREATE TABLE Bills (
+    bill_id INT AUTO_INCREMENT PRIMARY KEY,
+    contract_id INT NOT NULL,
+    bill_month DATE NOT NULL, -- tháng áp dụng (dùng ngày đầu tháng)
+    total_amount DECIMAL(10, 2) NOT NULL,
+    water_amount DECIMAL(10, 2),
+    electricity_amount DECIMAL(10, 2),
+    service_amount DECIMAL(10, 2),
+    payment_status ENUM('Unpaid', 'Paid', 'Failed') DEFAULT 'Unpaid',
+    payment_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (contract_id) REFERENCES Contracts(contract_id) ON DELETE CASCADE
+);
+ALTER TABLE Bills ADD COLUMN rent_amount DECIMAL(10,2) DEFAULT 0;

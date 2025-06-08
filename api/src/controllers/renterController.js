@@ -1,4 +1,5 @@
 const renterModel = require('../models/renterModel');
+const billModel=require('../models/billModel');
 const crypto = require('crypto');
 const axios = require('axios');
 
@@ -39,7 +40,7 @@ exports.getActiveContracts = (req, res) => {
 
 exports.rentRoom = (req, res) => {
   const userId = req.user.user_id;
-  const { room_id, rent_price, deposit_amount } = req.body;
+  const { room_id, rent_price, deposit_amount,months } = req.body;
 
   if (!room_id || !rent_price) {
     return res.status(400).json({ error: 'room_id và rent_price là bắt buộc' });
@@ -48,7 +49,7 @@ exports.rentRoom = (req, res) => {
   const start_date = new Date().toISOString().split('T')[0];
 
   // 1. Tạo hợp đồng
-  renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price, deposit_amount }, (err, result) => {
+  renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price, deposit_amount,months }, (err, result) => {
     if (err) {
       console.error('Lỗi khi tạo hợp đồng:', err);
       return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
@@ -83,24 +84,25 @@ exports.leaveRoom = (req, res) => {
   const userId = req.user.user_id;
   const contractId = parseInt(req.params.contractId);
 
-  renterModel.getActiveContractsByUser(userId, (err, contracts) => {
-    if (err) return res.status(500).json({ error: 'Lỗi server khi kiểm tra hợp đồng' });
+  // Lấy thông tin hợp đồng + các hóa đơn liên quan
+  renterModel.getContractWithBills(userId, contractId, (err, contract, bills) => {
+    if (err) return res.status(500).json({ error: 'Lỗi server khi lấy hợp đồng và hóa đơn' });
 
-    const contract = contracts.find(c => c.contract_id === contractId);
     if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
-    if (contract.payment_status !== 'Paid') {
-      return res.status(400).json({ error: 'Bạn phải hoàn thành thanh toán hợp đồng trước khi trả phòng.' });
+    const unpaidBill = bills.find(bill => bill.payment_status !== 'Paid');
+    if (unpaidBill) {
+      return res.status(400).json({ error: 'Bạn phải thanh toán tất cả hóa đơn trước khi trả phòng.' });
     }
 
-    // Cập nhật trạng thái hợp đồng thành "Completed"
+    // Cập nhật trạng thái hợp đồng
     renterModel.updateContract(contractId, { status: 'Completed' }, (err2) => {
-      if (err2) return res.status(500).json({ error: 'Lỗi server khi cập nhật hợp đồng' });
+      if (err2) return res.status(500).json({ error: 'Lỗi khi cập nhật hợp đồng' });
 
-      // Cập nhật trạng thái phòng về "Available"
-      renterModel.updateRoomStatus(contract.room_id,userId, 'Under Maintenance', (err3) => {
+      // Cập nhật trạng thái phòng
+      renterModel.updateRoomStatus(contract.room_id, userId, 'Under Maintenance', (err3) => {
         if (err3) return res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái phòng' });
-        
+
         res.json({ message: 'Trả phòng thành công' });
       });
     });
@@ -207,7 +209,7 @@ exports.createPayment = async (req, res) => {
 exports.redirectPayment = (req, res) => {
   const { orderId, resultCode, message, amount, transId, extraData } = req.query;
 
-  let redirectClientUrl = 'http://localhost:3000/#/my-room';
+  let redirectClientUrl = 'http://localhost:3000/my-room';
   let type = null;
   let room_id = null;
   let rent_price = null;
@@ -340,27 +342,64 @@ exports.checkCanRentRoom = (req, res) => {
 
 exports.mockPaymentSuccess = (req, res) => {
   const userId = req.user.user_id;
-  const { room_id, rent_price,amount } = req.body;
   console.log(req.body)
+  const { room_id, rent_price, amount, months = 1 } = req.body;
+  const start_date = new Date().toISOString().split('T')[0];
 
   if (!userId || !room_id || !rent_price) {
     return res.status(400).json({ error: 'Thiếu thông tin để giả lập thanh toán' });
   }
 
-  const start_date = new Date().toISOString().split('T')[0];
+  // ✅ Bước 0: Kiểm tra số lượng phòng người dùng đang thuê
+  renterModel.countActiveContractsByUser(userId, (err, count) => {
+    if (err) return res.status(500).json({ error: 'Lỗi kiểm tra số hợp đồng hiện tại' });
 
-  renterModel.createContract({ room_id, renter_id: userId, start_date, rent_price, amount }, (err, result) => {
-    if (err) return res.status(500).json({ error: 'Lỗi tạo hợp đồng trong mock' });
+    if (count >= 3) {
+      return res.status(400).json({ error: 'Người thuê không được thuê quá 3 phòng cùng lúc.' });
+    }
 
-    renterModel.updateRoomStatus(room_id, 0, 'Rented', (err2) => {
-      if (err2) return res.status(500).json({ error: 'Lỗi cập nhật phòng trong mock' });
+    // 1. Tạo hợp đồng
+    renterModel.createContract(
+      { room_id, renter_id: userId, start_date, rent_price, deposit_amount: amount, months },
+      (err, result) => {
+        if (err) return res.status(500).json({ error: 'Lỗi tạo hợp đồng trong mock' });
 
-      renterModel.addRenterToRoom({ room_id, renter_id: userId, join_date: start_date }, (err3) => {
-        if (err3) return res.status(500).json({ error: 'Lỗi thêm người thuê trong mock' });
+        const contractId = result.insertId;
 
-        res.json({ message: '✅ Giả lập thành công', contractId: result.insertId });
-      });
-    });
+        // 2. Cập nhật trạng thái phòng
+        renterModel.updateRoomStatus(room_id, 0, 'Rented', (err2) => {
+          if (err2) return res.status(500).json({ error: 'Lỗi cập nhật phòng trong mock' });
+
+          // 3. Thêm người thuê vào Room_Renters
+          renterModel.addRenterToRoom({ room_id, renter_id: userId, join_date: start_date }, (err3) => {
+            if (err3) return res.status(500).json({ error: 'Lỗi thêm người thuê trong mock' });
+
+            // 4. Tạo bill đầu tiên
+            const billData = {
+              contract_id: contractId,
+              bill_month: start_date,
+              total_amount: rent_price * months,
+              water_amount: 0,
+              electricity_amount: 0,
+              service_amount: 0,
+              rent_amount: rent_price * months,
+              payment_status: 'Paid',
+              payment_date: null,
+              new_water: 0,
+              new_electric: 0,
+              room_id,
+              term_extended: months
+            };
+
+            billModel.createBill(billData, (err4) => {
+              if (err4) return res.status(500).json({ error: 'Tạo hợp đồng thành công nhưng lỗi tạo bill.' });
+
+              res.json({ message: '✅ Giả lập thành công, đã tạo hợp đồng và bill.', contractId });
+            });
+          });
+        });
+      }
+    );
   });
 };
 
@@ -378,5 +417,15 @@ exports.simulatePayment = (req, res) => {
     }
 
     return res.status(200).json({ message: 'Giả lập thanh toán thành công' });
+  });
+};
+
+exports.getBillsByContractId = (req, res) => {
+  const contractId = req.query.contractId;
+  if (!contractId) return res.status(400).json({ error: 'Thiếu contractId' });
+
+  billModel.getBillsByContract(contractId, (err, bills) => {
+    if (err) return res.status(500).json({ error: 'Lỗi truy vấn bills' });
+    res.json(bills);
   });
 };

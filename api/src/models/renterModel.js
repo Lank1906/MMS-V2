@@ -74,13 +74,47 @@ exports.getActiveContractsByUser = (userId, callback) => {
 };
 
 // Hàm tạo hợp đồng mới
-exports.createContract = (contractData, callback) => {
+exports.createContract = (data, callback) => {
+    console.log(data)
+  const {
+    room_id,
+    renter_id,
+    rent_price,
+    deposit_amount = 0,
+    months = 1
+  } = data;
+
+  const start_date = new Date();
+  const end_date = new Date(start_date);
+  end_date.setMonth(end_date.getMonth() + parseInt(months));
+
+  const formattedStart = start_date.toISOString().split('T')[0];
+  const formattedEnd = end_date.toISOString().split('T')[0];
+
   const sql = `
-    INSERT INTO Contracts (room_id, renter_id, start_date, rent_price, total_water_price, total_electricity_price, total_service_price, status, payment_status, payment_method, is_active,deposit_amount)
-    VALUES (?, ?, ?, ?, 0, 0, 0, 'Active', 'Unpaid', NULL, TRUE,?)
+    INSERT INTO Contracts (
+      room_id,
+      renter_id,
+      start_date,
+      end_date,
+      deposit_amount,
+      term_months,
+      status,
+      is_active
+    ) VALUES (?, ?, ?, ?, ?, ?, 'Active', 1)
   `;
-  const { room_id, renter_id, start_date, rent_price,amount } = contractData;
-  db.query(sql, [room_id, renter_id, start_date, rent_price,amount], (err, result) => {
+
+  const values = [
+    room_id,
+    renter_id,
+    formattedStart,
+    formattedEnd,
+    rent_price,
+    deposit_amount,
+    months
+  ];
+
+  db.query(sql, values, (err, result) => {
     if (err) return callback(err);
     callback(null, result);
   });
@@ -152,27 +186,34 @@ exports.updateUser = (userId, updateData, callback) => {
 };
 
 // Lấy thông tin hợp đồng chưa thanh toán của người dùng
-exports.getUnpaidContractsByUser = (userId, callback) => {
+exports.getUnpaidBillsByUser = (userId, callback) => {
   const sql = `
-    SELECT * FROM Contracts 
-    WHERE renter_id = ? AND status = 'Active' AND payment_status = 'Unpaid' AND is_active = TRUE
+    SELECT 
+      b.*, r.room_number, rt.name AS room_type_name
+    FROM Bills b
+    JOIN Contracts c ON b.contract_id = c.contract_id
+    JOIN Rooms r ON c.room_id = r.room_id
+    JOIN RoomTypes rt ON r.room_type_id = rt.room_type_id
+    WHERE c.renter_id = ? AND b.payment_status = 'Unpaid'
+    ORDER BY b.bill_month DESC
   `;
-  db.query(sql, [userId], (err, results) => {
-    if (err) return callback(err);
-    callback(null, results); // Trả về danh sách hợp đồng chưa thanh toán của người dùng
-  });
+  db.query(sql, [userId], callback);
 };
 
 exports.updateContractPaymentStatus = (orderId, updateData) => {
   return new Promise((resolve, reject) => {
-    const { payment_status, payment_amount, message } = updateData;
+    const { payment_status } = updateData;
+    const contractId = orderId.split('LANK')[0];
+
     const sql = `
-      UPDATE Contracts 
-      SET payment_status = ?, payment_method = ?,payment_date=?
-      WHERE contract_id = ? AND is_active = TRUE
+      UPDATE Bills
+      SET payment_status = ?, payment_date = ?
+      WHERE contract_id = ? AND payment_status = 'Unpaid'
+      ORDER BY bill_month DESC
+      LIMIT 1
     `;
-    
-    db.query(sql, [payment_status, 'Bank Transfer',new Date(),  orderId.split('LANK')[0]], (err, result) => {
+
+    db.query(sql, [payment_status, new Date(), contractId], (err, result) => {
       if (err) return reject(err);
       resolve(result);
     });
@@ -202,21 +243,82 @@ exports.cancelContract = (contractId, callback) => {
 
 exports.getContractsByUserAndPaymentStatus = (userId, paymentStatus, callback) => {
   const sql = `
-    SELECT * FROM Contracts
-    WHERE renter_id = ? AND payment_status = ? AND is_active = TRUE
+    SELECT c.*, b.payment_status, b.payment_date
+    FROM Contracts c
+    JOIN Bills b ON c.contract_id = b.contract_id
+    WHERE c.renter_id = ? AND b.payment_status = ? AND c.is_active = TRUE
   `;
   db.query(sql, [userId, paymentStatus], callback);
 };
-
 // Giả lập thanh toán hợp đồng: cập nhật payment_status = 'Paid'
 exports.simulatePayment = (contractId, callback) => {
   const sql = `
-    UPDATE Contracts 
-    SET payment_status = 'Paid' 
-    WHERE contract_id = ? AND is_active = TRUE
+    UPDATE Bills 
+    SET payment_status = 'Paid', payment_date = ?
+    WHERE contract_id = ? AND payment_status = 'Unpaid'
+    ORDER BY bill_month DESC
+    LIMIT 1
   `;
-  db.query(sql, [contractId], (err, result) => {
+  db.query(sql, [new Date(), contractId], (err, result) => {
     if (err) return callback(err);
     callback(null, result);
+  });
+};
+
+exports.getBillsByContractId = (contractId, callback) => {
+  const sql = `
+    SELECT * FROM Bills 
+    WHERE contract_id = ? 
+    ORDER BY bill_month DESC
+  `;
+  db.query(sql, [contractId], (err, results) => {
+    if (err) return callback(err);
+    callback(null, results);
+  });
+};
+
+// Lấy thông tin hợp đồng và danh sách hóa đơn theo contract_id và user
+exports.getContractWithBills = (userId, contractId, callback) => {
+  const sql = `
+    SELECT c.*, b.*
+    FROM Contracts c
+    LEFT JOIN Bills b ON c.contract_id = b.contract_id
+    WHERE c.contract_id = ? AND c.renter_id = ?
+  `;
+
+  db.query(sql, [contractId, userId], (err, results) => {
+    if (err) return callback(err);
+
+    if (results.length === 0) return callback(null, null, []);
+
+    const contract = {
+      contract_id: results[0].contract_id,
+      room_id: results[0].room_id,
+      renter_id: results[0].renter_id,
+      status: results[0].status,
+      deposit_amount: results[0].deposit_amount
+    };
+
+    const bills = results.map(r => ({
+      bill_id: r.bill_id,
+      payment_status: r.payment_status,
+      total_amount: r.total_amount,
+      bill_month: r.bill_month
+    }));
+
+    callback(null, contract, bills);
+  });
+};
+
+// Đếm số hợp đồng "Active" của người thuê
+exports.countActiveContractsByUser = (userId, callback) => {
+  const sql = `
+    SELECT COUNT(*) AS total
+    FROM Contracts
+    WHERE renter_id = ? AND status = 'Active'
+  `;
+  db.query(sql, [userId], (err, results) => {
+    if (err) return callback(err);
+    callback(null, results[0].total);
   });
 };

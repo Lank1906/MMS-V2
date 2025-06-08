@@ -16,5 +16,6 @@ router.get('/profile', renterController.getProfile);
 router.put('/profile', renterController.updateProfile);
 router.post('/create-payment',renterController.createPayment);
 router.post('/mock-payment', renterController.mockPaymentSuccess);
+router.get('/bills', renterController.getBillsByContractId);
 
 module.exports = router;

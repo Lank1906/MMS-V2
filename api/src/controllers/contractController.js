@@ -1,4 +1,5 @@
 const contractModel = require('../models/contractModel');
+// const billModel = require('../models/billModel'); // Nếu bạn muốn tự động tạo bill sau này
 
 exports.getContracts = (req, res) => {
   const landlordId = req.user.user_id;
@@ -26,7 +27,16 @@ exports.createContract = (req, res) => {
 
   contractModel.createContract(data, (err, result) => {
     if (err) return res.status(500).json({ error: 'Lỗi server khi tạo hợp đồng' });
-    res.status(201).json({ message: 'Tạo hợp đồng thành công', contractId: result.insertId });
+
+    const contractId = result.insertId;
+
+    // GỢI Ý: Nếu muốn tạo bills tự động:
+    // billModel.generateBillsFromContract(contractId, data, (billErr) => {
+    //   if (billErr) return res.status(500).json({ error: 'Tạo hợp đồng thành công nhưng lỗi khi tạo hóa đơn' });
+    //   return res.status(201).json({ message: 'Tạo hợp đồng và hóa đơn thành công', contractId });
+    // });
+
+    res.status(201).json({ message: 'Tạo hợp đồng thành công', contractId });
   });
 };
 
