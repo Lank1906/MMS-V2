@@ -23,7 +23,6 @@ exports.getBillById = (id, callback) => {
 exports.createBill = (data, callback) => {
   db.beginTransaction(err => {
     if (err) return callback(err);
-
     const updateContractTerm = (next) => {
       if (data.term_extended && data.term_extended > 0) {
         const sqlUpdate = `

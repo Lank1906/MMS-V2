@@ -109,7 +109,6 @@ exports.createContract = (data, callback) => {
     renter_id,
     formattedStart,
     formattedEnd,
-    rent_price,
     deposit_amount,
     months
   ];

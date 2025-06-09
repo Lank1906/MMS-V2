@@ -167,7 +167,7 @@ const DashboardPage = () => {
 
   return (
     <div style={{ marginTop:'12px'}}>
-      <div style={{ width: Math.max(600, chartData.length * 100), height: 300 }}>
+      <div style={{ width: 600, height: 300 }}>
         <ResponsiveContainer>
           <LineChart data={chartData} margin={{ right: 30, left: 80 }}>
             <CartesianGrid strokeDasharray="3 3" />

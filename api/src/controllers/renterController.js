@@ -384,11 +384,11 @@ exports.mockPaymentSuccess = (req, res) => {
               service_amount: 0,
               rent_amount: rent_price * months,
               payment_status: 'Paid',
-              payment_date: null,
+              payment_date: start_date,
               new_water: 0,
               new_electric: 0,
               room_id,
-              term_extended: months
+              term_extended: months,
             };
 
             billModel.createBill(billData, (err4) => {

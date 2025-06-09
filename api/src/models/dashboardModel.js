@@ -145,11 +145,13 @@ exports.getLandlordDashboardData = async (landlordId) => {
 
   const totalRooms = rooms.length;
   const rentedRooms = rooms.filter(r => r.status === 'Rented').length;
+  const maintainRooms=rooms.filter(r => r.status === 'Under Maintenance').length;
   const availableRooms = totalRooms - rentedRooms;
 
   return {
     rentedRooms,
     availableRooms,
+    maintainRooms,
     renterCount: renterCount[0].total,
     totalElectricity: utilitySum[0].totalElectricity || 0,
     totalWater: utilitySum[0].totalWater || 0,

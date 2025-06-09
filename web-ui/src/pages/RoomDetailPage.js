@@ -151,7 +151,8 @@ const RoomDetailPage = () => {
         }
     };
 
-    const handleDeleteContract = async (id) => {
+    const handleDeleteContract = async (event,id) => {
+        event.stopPropagation()
         if (!window.confirm('Bạn có chắc chắn muốn xóa hợp đồng này?')) return;
         try {
             await deleteContract(id);
@@ -392,7 +393,7 @@ const RoomDetailPage = () => {
                                         <td style={{ padding: 12 }}>{contract.status}</td>
                                         <td style={{ padding: 12 }}>
                                             <button
-                                                onClick={() => handleDeleteContract(contract.contract_id)}
+                                                onClick={(e) => handleDeleteContract(e,contract.contract_id)}
                                                 style={{ background: '#f44336', color: 'white', padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
                                                 Xoá
                                             </button>
