@@ -98,7 +98,7 @@ const MyRoomPage = () => {
     try {
 
       const paymentData = await createPayment(
-        50000,
+        bill.rent_amount,
         contract.contract_id,
         `Thanh toán hợp đồng phòng ${roomsMap[contract.room_id]?.room_number}`,
         'https://lank1906.github.io/MMS-V2/#/my-room'
@@ -199,11 +199,11 @@ const MyRoomPage = () => {
                         <td>{bill?.bill_id}</td>
                         <td>{new Date(c.start_date).toLocaleDateString()} - {c.end_date ? new Date(c.end_date).toLocaleDateString() : '-'}</td>
                         <td>{bill?.payment_status || 'Unpaid'}</td>
-                        <td>{bill?.rent_amount?.toLocaleString('vi-VN') || 0}₫</td>
-                        <td>{bill?.electricity_amount?.toLocaleString('vi-VN') || 0}₫</td>
-                        <td>{bill?.water_amount?.toLocaleString('vi-VN') || 0}₫</td>
-                        <td>{bill?.service_amount?.toLocaleString('vi-VN') || 0}₫</td>
-                        <td><strong>{bill?.total_amount?.toLocaleString('vi-VN') || 0}₫</strong></td>
+                        <td>{Number(bill?.rent_amount)?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{Number(bill?.electricity_amount)?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{Number(bill?.water_amount)?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td>{Number(bill?.service_amount)?.toLocaleString('vi-VN') || 0}₫</td>
+                        <td><strong>{Number(bill?.total_amount)?.toLocaleString('vi-VN') || 0}₫</strong></td>
                         <td>
                           {bill?.payment_status === 'Unpaid' && (
                             <>
