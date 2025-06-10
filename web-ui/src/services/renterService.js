@@ -109,7 +109,9 @@ export const createPayment = async (amount, orderId, orderInfo, redirectLink) =>
       amount,
       orderId,
       orderInfo,
-      redirectLink,
+      extraData: {
+        redirectLink
+      }
     }, {
       headers: { Authorization: getToken() },
     });
@@ -145,13 +147,11 @@ export const checkRentCondition = async () => {
   }
 };
 
-export const createDepositPayment = async (room_id, rent_price, redirectLink) => {
-  const depositAmount = Math.floor(rent_price * 0.3);
-  const orderId = `${room_id}-${Date.now()}`;
+export const createDepositPayment = async (room_id, rent_price, redirectLink,months,room_number) => {
+  const orderId = `LANK${room_number}${Math.floor(Math.random() * 100000000000)+Math.floor(Math.random() * 100000000000)}`;
   const orderInfo = `Đặt cọc thuê phòng ${room_id}`;
-
   const res = await axios.post(`${API_URL}/create-payment`, {
-    amount: depositAmount,
+    amount: rent_price,
     orderId,
     orderInfo,
     redirectLink,
@@ -159,7 +159,8 @@ export const createDepositPayment = async (room_id, rent_price, redirectLink) =>
       room_id,
       rent_price,
       type: 'deposit',
-      redirectLink
+      redirectLink,
+      months
     }
   }, {
     headers: { Authorization: getToken() }
@@ -168,7 +169,7 @@ export const createDepositPayment = async (room_id, rent_price, redirectLink) =>
   return res.data; // payUrl
 };
 
-export const mockPayment = async ({ orderId, amount, type, room_id, rent_price,months, redirectLink }) => {
+export const mockPayment = async ({ orderId, amount, type, room_id, rent_price, months, redirectLink }) => {
   try {
     const res = await axios.post(`${API_URL}/mock-payment`, {
       orderId,

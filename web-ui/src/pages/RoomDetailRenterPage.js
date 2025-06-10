@@ -42,11 +42,12 @@ const RoomDetailRenterPage = () => {
       const confirm = window.confirm(`Bạn cần thanh toán trước ${totalAmount.toLocaleString('vi-VN')}₫ cho ${months} tháng thuê. Tiếp tục?`);
       if (!confirm) return;
 
-      const paymentData = await renterService.createPayment(
+      const paymentData = await renterService.createDepositPayment(
+        room.room_id,
         totalAmount,
-        `${room.room_id}-${Date.now()}`,
-        `Thanh toán ${months} tháng thuê phòng ${room.room_number}`,
-        'https://lank1906.github.io/MMS-V2/#/my-room'
+        'https://lank1906.github.io/MMS-V2/#/my-room',
+        months,
+        room.room_number
       );
 
       if (paymentData?.payUrl) {
