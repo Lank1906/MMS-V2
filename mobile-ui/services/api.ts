@@ -174,6 +174,7 @@ export const mockPayment = async ({
   type,
   room_id,
   rent_price,
+  months,
   redirectLink
 }: {
   orderId: string;
@@ -181,6 +182,7 @@ export const mockPayment = async ({
   type: string;
   room_id: number;
   rent_price: number;
+  months:number;
   redirectLink: string;
 }) => {
   const token = await getToken();
@@ -190,6 +192,7 @@ export const mockPayment = async ({
     type,
     room_id,
     rent_price,
+    months,
     redirectLink,
   }, {
     headers: { Authorization: token },
@@ -215,6 +218,15 @@ export const simulatePayment = async (contractId: number): Promise<any> => {
   }
 };
 
+export const getBillsByContractId = async (contractId: number) => {
+  const token = await getToken();
+  const res = await axios.get(`${RENTER_URL}/bills`, {
+    headers: { Authorization: token },
+    params: { contractId }
+  });
+  return res.data;
+};
+
 export default {
   login,
   register,
@@ -233,5 +245,6 @@ export default {
   checkRentCondition,
   createDepositPayment,
   mockPayment,
-  simulatePayment
+  simulatePayment,
+  getBillsByContractId
 };

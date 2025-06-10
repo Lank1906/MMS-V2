@@ -9,9 +9,18 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  RefreshControl,
+  Modal,
+  TextInput,
+  Button,
+  Platform,
 } from 'react-native';
-import { checkRentCondition, createDepositPayment, getRoomById, mockPayment } from '../../services/api';
-import { RefreshControl } from 'react-native';
+import {
+  checkRentCondition,
+  createDepositPayment,
+  getRoomById,
+  mockPayment,
+} from '../../services/api';
 
 type Room = {
   room_id: number;
@@ -35,6 +44,10 @@ export default function RoomDetailScreen() {
   const [isRented, setIsRented] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [termMonths, setTermMonths] = useState<number>(1);
+  const [showModal, setShowModal] = useState(false);
+  const [monthInput, setMonthInput] = useState('');
+
   const loadRoom = async () => {
     try {
       setLoading(true);
@@ -44,37 +57,45 @@ export default function RoomDetailScreen() {
       setError('Lấy thông tin phòng thất bại.');
     } finally {
       setLoading(false);
-      setRefreshing(false); // <-- reset sau khi refresh
+      setRefreshing(false);
     }
   };
 
-
   useEffect(() => {
     if (roomId) loadRoom();
-    setIsRented(false)
+    setIsRented(false);
   }, [roomId]);
 
   const handleRent = async () => {
-    if (!room) return;
+    const parsed = parseInt(monthInput);
+    if (isNaN(parsed) || parsed <= 0) {
+      Alert.alert('Lỗi', 'Số tháng không hợp lệ.');
+      return;
+    }
+
+    setTermMonths(parsed);
+    setShowModal(false);
 
     try {
-      // 1. Kiểm tra điều kiện thuê
       const condition = await checkRentCondition();
       if (!condition.canRent) {
         Alert.alert('Không thể thuê phòng', condition.reason || 'Vui lòng kiểm tra lại.');
         return;
       }
 
-      // 2. Tính tiền đặt cọc = 30% giá thuê
-      const redirectLink = 'https://mms-mobile-success.com/my-room'; // đường dẫn sẽ mở lại app sau khi thanh toán
-      const data = await createDepositPayment(room.room_id, room.rent_price, redirectLink);
-
+      const data = await createDepositPayment(
+        room!.room_id,
+        room!.rent_price,
+        'https://mms-mobile-success.com/my-room'
+      );
       if (data?.payUrl) {
-        // 3. Redirect đến trang MoMo
-        // Với React Native có thể dùng `Linking.openURL(...)`
-        import('react-native').then(({ Linking }) => {
-          Linking.openURL(data.payUrl);
-        });
+        if (Platform.OS === 'web') {
+          window.location.href = data.payUrl;
+        } else {
+          import('react-native').then(({ Linking }) => {
+            Linking.openURL(data.payUrl);
+          });
+        }
       } else {
         Alert.alert('Lỗi', 'Không tạo được đường dẫn thanh toán.');
       }
@@ -87,6 +108,7 @@ export default function RoomDetailScreen() {
     if (!room) return;
 
     try {
+      const months = 3;
       const amount = Math.floor(room.rent_price * 0.3);
       const orderId = `${room.room_id}-mock-${Date.now()}`;
       const redirectLink = 'https://mms-mobile-success.com/my-room';
@@ -97,10 +119,11 @@ export default function RoomDetailScreen() {
         type: 'deposit',
         room_id: room.room_id,
         rent_price: room.rent_price,
+        months,
         redirectLink,
       });
 
-      alert(res.message)
+      alert(res.message);
     } catch (err: any) {
       Alert.alert('Lỗi', err?.response?.data?.error || 'Không thể thực hiện giả lập.');
     }
@@ -114,10 +137,13 @@ export default function RoomDetailScreen() {
     <ScrollView
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={() => {
-          setRefreshing(true);
-          loadRoom();
-        }} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            loadRoom();
+          }}
+        />
       }
     >
       <Text style={styles.heading}>Chi tiết phòng</Text>
@@ -151,7 +177,7 @@ export default function RoomDetailScreen() {
 
       {!isRented && room.status === 'Available' ? (
         <>
-          <TouchableOpacity style={styles.rentBtn} onPress={handleRent}>
+          <TouchableOpacity style={styles.rentBtn} onPress={() => setShowModal(true)}>
             <Text style={styles.rentBtnText}>Thuê phòng này</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -164,6 +190,25 @@ export default function RoomDetailScreen() {
       ) : (
         <Text style={styles.rentedMsg}>Bạn đang thuê phòng này.</Text>
       )}
+
+      <Modal visible={showModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Nhập số tháng muốn thuê</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="number-pad"
+              placeholder="Ví dụ: 3"
+              value={monthInput}
+              onChangeText={setMonthInput}
+            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button title="Hủy" onPress={() => setShowModal(false)} />
+              <Button title="Xác nhận" onPress={handleRent} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -239,5 +284,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 12,
+    fontWeight: 'bold',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    width: '100%',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });

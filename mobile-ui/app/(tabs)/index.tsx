@@ -1,6 +1,6 @@
 // app/index.tsx - Dashboard cho Renter (danh sách phòng trống)
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { getAvailableRooms } from '../../services/api';
 import { router } from 'expo-router';
 
@@ -24,9 +24,12 @@ export default function DashboardScreen() {
   const [filters, setFilters] = useState<Filters>({ address: '', minPrice: '', maxPrice: '' });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchRooms = async () => {
-    setLoading(true);
+  const fetchRooms = async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
+    else setRefreshing(true);
+
     try {
       const params = {
         address: filters.address,
@@ -41,6 +44,7 @@ export default function DashboardScreen() {
       setError('Không thể tải danh sách phòng');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -105,6 +109,12 @@ export default function DashboardScreen() {
         renderItem={renderRoom}
         keyExtractor={(item) => item.room_id.toString()}
         contentContainerStyle={{ paddingBottom: 80 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchRooms(true)}
+          />
+        }
       />
     </View>
   );
